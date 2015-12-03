@@ -4,7 +4,10 @@ Sequencing 16S rRNA gene fragments using the PacBio SMRT DNA sequencing system
 This is the repository for the manuscript "Sequencing 16S rRNA gene fragments using the PacBio SMRT
 DNA sequencing system" written by Patrick D. Schloss, Sarah L. Westcott, Matthew L. Jenior, and 
 Sarah K. Highlander.The raw data can be obtained from the Sequence Read Archive at NCBI under accession 
-SRP0XXXXX, which are associated with BioProject PRJNAXXXXX.
+SRP0XXXXX, which are associated with BioProject PRJNAXXXXX. This project relies heavily on an earlier
+version of this project that used an older version of the chemistry. Because that project was published
+as a preprint and the current project represents a significant shift in structure, we have created this
+repository. You can find the older version at https://github.com/SchlossLab/Schloss_PacBio16S_PeerJ_2015.
 
 
 
