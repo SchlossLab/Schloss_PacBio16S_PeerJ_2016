@@ -29,6 +29,8 @@ Overview
     |                  # will be committed to repo
     |
     |- code/           # any programmatic code
+    |  |
+    |  +- smrtanalysis/smrtcmds/bin/ #PacBio software. exe's are here
     |- results         # all output from workflows and analyses
     |  |- tables/      # text version of tables to be rendered with kable in R
     |  |- figures/     # graphs, likely designated for manuscript figures
