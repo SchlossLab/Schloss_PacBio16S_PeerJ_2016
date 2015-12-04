@@ -11,3 +11,6 @@ data/*/*
 mothur*logfile
 *temp*
 *.docx
+
+
+code/smrt*
