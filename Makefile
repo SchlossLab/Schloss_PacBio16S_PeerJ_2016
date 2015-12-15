@@ -43,7 +43,8 @@ generate_ccs_stats : code/get_ccs_stats.sh
 	bash code/get_ccs_stats.sh
 
 
-# Finally, we want to pool the *.fastq and *.ccs_stats files for each region within each data drop
+# Next, we want to pool the *.fastq and *.ccs_stats files for each region within each data drop. We'll dump the
+# output into data/mothur_*/
 
 pool_fastqs : code/pool_fastqs.sh
 	bash code/pool_fastqs.sh
@@ -51,3 +52,8 @@ pool_fastqs : code/pool_fastqs.sh
 pool_ccs_stats : code/pool_ccs_stats.sh
 	bash code/pool_ccs_stats.sh
 
+
+# Finally, we'd like to split the *.fastq files into separate *.fasta and *.qual files
+
+fastq_info : code/run_fastq_info.sh
+	bash code/run_fastq_info.sh
