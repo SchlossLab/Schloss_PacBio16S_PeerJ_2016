@@ -23,8 +23,10 @@ Overview
     |
     |- data            # raw and primary data, are not changed once created
     |  |- references/  # reference files to be used in analysis
-    |  |- raw/         # raw data, will not be altered
-    |  |- mothur/      # mothur processed data
+    |  |- raw_june/    # raw data from june sequencing
+    |  |- raw_october/ # raw data from october sequencing
+    |  |- mothur_june/ # processing of june data with mothur 
+    |  |- mothur_october # processing of october data with mothur
     |  +- process/     # cleaned data, will not be altered once created;
     |                  # will be committed to repo
     |
