@@ -58,12 +58,20 @@ $(REFS)/trainset14_032015.% :
 	rm Trainset14_032015.pds.tgz
 
 
-# Finally, we want to align the mock community reference sequences to our newly created
+# Now, we want to align the mock community reference sequences to our newly created
 # silva.bacteria.fasta file...
 
 $(REFS)/HMP_MOCK.% :
 	wget --no-check-certificate -N -P $(REFS) https://raw.githubusercontent.com/SchlossLab/Kozich_MiSeqSOP_AEM_2013/master/data/references/HMP_MOCK.fasta
 	mothur "#align.seqs(fasta=$(REFS)/HMP_MOCK.fasta, reference=$(REFS)/silva.bacteria.align)"
+
+
+# Finally, using the primer and barcode information from above, we can make region-specific oligos files
+# and put them into the regional folders:
+
+$(REFS)/pacbio.%.oligos : $(REFS)/pacbio.oligos
+	grep "$*" $(REFS)/pacbio.oligos > $@
+	grep "barcode" $(REFS)/pacbio.oligos >> $@
 
 
 
