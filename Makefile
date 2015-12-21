@@ -179,10 +179,12 @@ $(SAMPLE_FASTA) $(SAMPLE_QUAL) $(SAMPLE_GROUPS) : $$(addsuffix .fasta,$$(basenam
 		cat $(patsubst %.fasta,%.$$S*.$(REGION).fasta,$(RAW_FASTA)) > $(patsubst %.fasta,%.$$S.fasta,$(RAW_FASTA)); \
 		cat $(patsubst %.fasta,%.$$S*.$(REGION).qual,$(RAW_FASTA)) > $(patsubst %.fasta,%.$$S.qual,$(RAW_FASTA)); \
 		cat $(patsubst %.fasta,%.$$S*.$(REGION).groups,$(RAW_FASTA)) > $(patsubst %.fasta,%.$$S.groups,$(RAW_FASTA)); \
-		rm $(patsubst %.fasta,%.$$S*.$(REGION).*,$(RAW_FASTA)); \
+		rm $(patsubst %.fasta,%.$$S*.V**,$(RAW_FASTA)); \
 	done
 	rm $(patsubst %.fasta,%.trim.*,$(RAW_FASTA));
 	rm $(patsubst %.fasta,%.scrap.*,$(RAW_FASTA));
+	rm $(patsubst %.fasta,%.groups,$(RAW_FASTA));
+
 	
 
 
