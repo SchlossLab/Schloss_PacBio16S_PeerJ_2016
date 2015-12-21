@@ -228,7 +228,6 @@ $(ALIGN_SUMMARY) : $$(subst filter.summary,fasta,$$@) $$(subst filter.summary,qu
 	    summary.seqs();\
 	    seq.error(fasta=$(STUB).filter.fasta, reference=$(STUB).HMP_MOCK.filter.fasta, report=$(STUB).align.report, qfile=$(STUB).qual);"
 	rm $(STUB).align*
-	rm $(STUB).flip.accnos
 	rm $(STUB).filter.fasta   
 	rm $(STUB).filter.error.seq
 	rm $(STUB).filter.error.chimera
