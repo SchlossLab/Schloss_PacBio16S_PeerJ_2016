@@ -66,15 +66,6 @@ $(REFS)/HMP_MOCK.% :
 	mothur "#align.seqs(fasta=$(REFS)/HMP_MOCK.fasta, reference=$(REFS)/silva.bacteria.align)"
 
 
-# Finally, using the primer and barcode information from above, we can make region-specific oligos files
-# and put them into the regional folders:
-
-$(REFS)/pacbio.%.oligos : $(REFS)/pacbio.oligos
-	grep "$*" $(REFS)/pacbio.oligos > $@
-	grep "barcode" $(REFS)/pacbio.oligos >> $@
-
-
-
 
 ###########################################################################################################
 #
@@ -133,20 +124,73 @@ $(BAM_CCS_STATS) : $$(subst .ccs_stats,,$$@)
 
 
 
-# Finally, we want to pool the *.fastq and *.ccs_stats files for each region within each data drop
+# We want to pool the *.fastq and *.ccs_stats files for each region within each data and we'll drop them in the appropriate
+# data/mothur_* folder
 
-data/mothur_%.ccs_stats : $(BAM_CCS_STATS)
-	cat $(join $(join data/raw_,$*),_*.ccs_stats) > $@
+FASTQ = $(sort $(subst raw,mothur,$(addsuffix .fastq,$(basename $(subst _0,.,$(subst .bam.fastq,,$(BAM_FASTQ)))))))
 
-data/mothur_%.fastq : $(BAM_FASTQ)
-	cat $(join $(join data/raw_,$*),_*.fastq) > $@
-
+$(FASTQ) : $$(subst mothur,raw,$$(subst .fastq,_*.bam.fastq,$$@))
+	cat $^ > $@
 
 
-# Let's extract the fasta and quality score data from the fastq files
+CCS_STATS = $(sort $(subst raw,mothur,$(addsuffix .ccs_stats,$(basename $(subst _0,.,$(subst .bam.fastq,,$(BAM_FASTQ)))))))
 
-data/mothur_%.fasta data/mothur_%.qual : data/mothur_%.fastq
+$(CCS_STATS) : $$(subst mothur,raw,$$(subst .ccs_stats,_*.bam.ccs_stats,$$@))
+	cat $^ > $@
+
+
+
+# Finally, let's extract the fasta and quality score data from the fastq files
+
+FASTA_QUAL = $(subst fastq,fasta,$(FASTQ)) $(subst fastq,qual,$(FASTQ))
+$(FASTA_QUAL) : $$(addsuffix .fastq,$$(basename $$@))
 	mothur "#fastq.info(fastq=$^, pacbio=T)"
 
 
+
+
+###########################################################################################################
+#
+# Part 3: Processing to separate reads by library
+#
+# Now we're all set to run some mothur commands. Since each file is a mixture of our mock community and
+# data from soil, human feces, and mouse feces, we need to split the fasta and qual files by barcode. Let's
+# initially be generous and allow for 2 mismatches to each barcode and 4 mismatches to each primer. To keep
+# things simple, we'll concatenate the three mock community fasta, quality score, and groups files.
+#
+###########################################################################################################
+
+
+SAMPLES = mock soil human mouse
+#REP = 1 2 3
+#SAMPLE_REP = $(foreach S,$(SAMPLES),$(foreach R,$(REP),$S$R))
+
+SAMPLE_FASTA = $(foreach S,$(SAMPLES),$(foreach B,$(sort $(basename $(FASTA_QUAL))),$B.$S.fasta))
+SAMPLE_QUAL = $(subst fasta,qual,$(SAMPLE_FASTA))
+SAMPLE_GROUPS = $(subst fasta,groups,$(SAMPLE_FASTA))
+
+$(SAMPLE_FASTA) $(SAMPLE_QUAL) $(SAMPLE_GROUPS) : $$(addsuffix .fasta,$$(basename $$(basename $$@))) $$(addsuffix .qual,$$(basename $$(basename $$@))) data/references/pacbio.oligos
+	$(eval RAW_FASTA = $(word 1, $^))
+	$(eval RAW_QUAL = $(word 2, $^))
+	$(eval OLIGOS = $(word 3, $^))
+	$(eval REGION = $(subst october/,,$(subst june/,,$(patsubst data/mothur_%.fasta,%,$(RAW_FASTA)))))
+	mothur "#trim.seqs(fasta=$(RAW_FASTA), qfile=$(RAW_QUAL), oligos=$(OLIGOS), checkorient=T, pdiffs=4, bdiffs=2, allfiles=T, processors=8)"
+	for S in $(SAMPLES) ; do \
+		cat $(patsubst %.fasta,%.$$S*.$(REGION).fasta,$(RAW_FASTA)) > $(patsubst %.fasta,%.$$S.fasta,$(RAW_FASTA)); \
+		cat $(patsubst %.fasta,%.$$S*.$(REGION).qual,$(RAW_FASTA)) > $(patsubst %.fasta,%.$$S.qual,$(RAW_FASTA)); \
+		cat $(patsubst %.fasta,%.$$S*.$(REGION).groups,$(RAW_FASTA)) > $(patsubst %.fasta,%.$$S.groups,$(RAW_FASTA)); \
+		rm $(patsubst %.fasta,%.$$S*.$(REGION).*,$(RAW_FASTA)); \
+	done
+	rm $(patsubst %.fasta,%.trim.*,$(RAW_FASTA));
+	rm $(patsubst %.fasta,%.scrap.*,$(RAW_FASTA));
+	
+
+
+###########################################################################################################
+#
+# Part 4: Processing mock community data
+# 
+# Here we'll work with the mock community samples to get a sense of their error rate
+#
+###########################################################################################################
 
