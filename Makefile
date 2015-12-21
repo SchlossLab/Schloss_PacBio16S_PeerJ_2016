@@ -2,7 +2,7 @@
 #	make print-BAM
 #
 # will generate:
-#	BAM=data/raw_june/V1-V3_0001.bam data/raw_june/V1-V3_0002.bam data/raw_june/V1-V3_0003.bam data/raw_june/V1-V3_0004.bam data/raw_june/V1-V3_0005.bam data/raw_june/V1-V3_0006.bam data/raw_june/V1-V5_0001.bam data/raw_june/V1-V5_0002.bam data/raw_june/V1-V5_0003.bam data/raw_june/V1-V5_0004.bam data/raw_june/V1-V5_0005.bam data/raw_june/V1-V5_0006.bam data/raw_june/V1-V6_0001.bam data/raw_june/V1-V6_0002.bam data/raw_june/V1-V6_0003.bam data/raw_june/V1-V6_0004.bam data/raw_june/V1-V6_0005.bam data/raw_june/V1-V9_0001.bam data/raw_june/V1-V9_0002.bam data/raw_june/V1-V9_0003.bam data/raw_june/V1-V9_0004.bam data/raw_june/V3-V5_0001.bam data/raw_june/V3-V5_0002.bam data/raw_june/V3-V5_0003.bam data/raw_june/V3-V5_0004.bam data/raw_june/V3-V5_0005.bam data/raw_june/V3-V5_0006.bam data/raw_june/V4_0001.bam data/raw_june/V4_0002.bam data/raw_june/V4_0003.bam data/raw_june/V4_0004.bam data/raw_june/V4_0005.bam data/raw_october/V1-V5_0001.bam data/raw_october/V1-V6_0001.bam data/raw_october/V1-V9_0001.bam
+#	BAM=data/raw_june/V1V3_0001.bam data/raw_june/V1V3_0002.bam data/raw_june/V1V3_0003.bam data/raw_june/V1V3_0004.bam data/raw_june/V1V3_0005.bam data/raw_june/V1V3_0006.bam data/raw_june/V1V5_0001.bam data/raw_june/V1V5_0002.bam data/raw_june/V1V5_0003.bam data/raw_june/V1V5_0004.bam data/raw_june/V1V5_0005.bam data/raw_june/V1V5_0006.bam data/raw_june/V1V6_0001.bam data/raw_june/V1V6_0002.bam data/raw_june/V1V6_0003.bam data/raw_june/V1V6_0004.bam data/raw_june/V1V6_0005.bam data/raw_june/V1V9_0001.bam data/raw_june/V1V9_0002.bam data/raw_june/V1V9_0003.bam data/raw_june/V1V9_0004.bam data/raw_june/V3V5_0001.bam data/raw_june/V3V5_0002.bam data/raw_june/V3V5_0003.bam data/raw_june/V3V5_0004.bam data/raw_june/V3V5_0005.bam data/raw_june/V3V5_0006.bam data/raw_june/V4_0001.bam data/raw_june/V4_0002.bam data/raw_june/V4_0003.bam data/raw_june/V4_0004.bam data/raw_june/V4_0005.bam data/raw_october/V1V5_0001.bam data/raw_october/V1V6_0001.bam data/raw_october/V1V9_0001.bam
 
 print-%:
 	@echo '$*=$($*)'
@@ -211,11 +211,36 @@ $(MISMATCH) : $$(subst mismatches,fasta,$$@)
 # HMP_MOCK sequence data. We will use mothur to align the sequences to HMP_MOCK.align, determine the start
 # and end positions of the alignment, and calculate the error rate.
 
-data/mothur_june/V1-V3.mock.filter.error.summary : data/mothur_june/V1-V3.mock.fasta $(REFS)/HMP_MOCK.align
-	$(eval STUB = $(subst .fasta,,$<))
-	cp $(REFS)/HMP_MOCK.align $(STUB).HMP_MOCK.align
-	mothur "#align.seqs(fasta=$^, reference=$(STUB).HMP_MOCK.align, processors=8);\
-	    filter.seqs(fasta=$(ALIGN).align-$(STUB).HMP_MOCK.align, vertical=T);\
+ALIGN_SUMMARY = $(subst fasta,filter.summary,$(MOCK_FASTA))
+ERROR_SUMMARY = $(subst	summary,error.summary,$(ALIGN_SUMMARY))
+ERROR_MATRIX = $(subst summary,error.matrix,$(ALIGN_SUMMARY))
+ERROR_QUALITY = $(subst summary,error.quality,$(ALIGN_SUMMARY))
+
+$(ALIGN_SUMMARY) : $$(subst filter.summary,fasta,$$@) $$(subst filter.summary,qual,$$@) $$(REFS)/HMP_MOCK.align
+	$(eval FASTA = $(word 1, $^))
+	$(eval QUAL = $(word 2, $^))
+	$(eval MOCK = $(word 3, $^))
+	$(eval STUB = $(subst .fasta,,$(FASTA)))
+	@echo $(STUB)
+	cp $(MOCK) $(STUB).HMP_MOCK.align
+	mothur "#align.seqs(fasta=$(FASTA), reference=$(STUB).HMP_MOCK.align, processors=8);\
+	    filter.seqs(fasta=$(STUB).align-$(STUB).HMP_MOCK.align, vertical=T);\
 	    summary.seqs();\
-	    seq.error(fasta=$(STUB).filter.fasta, reference=$(STUB).HMP_MOCK.filter.fasta, report=$(STUB).align.report,\ qfile=$(STUB).qual);"\
+	    seq.error(fasta=$(STUB).filter.fasta, reference=$(STUB).HMP_MOCK.filter.fasta, report=$(STUB).align.report, qfile=$(STUB).qual);"
+	rm $(STUB).align*
+	rm $(STUB).flip.accnos
+	rm $(STUB).filter.fasta   
+	rm $(STUB).filter.error.seq
+	rm $(STUB).filter.error.chimera
+	rm $(STUB).filter.error.qual.*
+	rm $(STUB).filter.error.seq.forward
+	rm $(STUB).filter.error.seq.*
+	rm $(STUB).filter.error.count
+	rm $(STUB).filter.error.ref
+	rm $(STUB).HMP_MOCK*
+
+
+$(ERROR_SUMMARY) $(ERROR_MATRIX) $(ERROR_QUALITY) : $$(subst error,summary,$$(basename $$@))
+
+
 
