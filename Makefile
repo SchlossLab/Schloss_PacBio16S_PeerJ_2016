@@ -11,14 +11,73 @@ print-%:
 
 ###########################################################################################################
 #
-# Part 1:
+# Part 1: Get the references
 #
-# The goal of the first part was to take the PacBio subreads files and convert them into fasta and qual
-# files. In some cases there were multiple movies per region per data generation event (e.g. june and
-# october of 2015). The project root directory has several folders that are useful for this makefile,
-# namely data/ and code/. Within data/ are raw_june/, mothur_june, raw_october, raw_june. These correspond 
-# to data dumps that we received from pacbio in the specified month. the october data was for the longer
-# regions with longer movies.
+# We will need several reference files to complete the analysis: the mock community sequences, the SILVA
+# reference alignment, and the SILVA, RDP, and greengenes reference taxonomies. 
+#
+###########################################################################################################
+
+REFS = data/references
+
+
+# We want the latest greatest reference alignment and the SILVA reference alignment is the best reference
+# alignment on the market. This version is from v123 and described at
+# http://blog.mothur.org/2014/08/08/SILVA-v119-reference-files/.  We will use the full-length version of
+# the database, which contains 137,879 bacterial sequences. This also contains the reference taxonomy. We
+# will limit the databases to only include bacterial sequences.
+
+$(REFS)/silva.bacteria.% :
+	wget -N http://mothur.org/w/images/b/be/Silva.nr_v123.tgz
+	tar xvzf Silva.nr_v123.tgz silva.nr_v123.align silva.nr_v123.tax
+	mothur "#get.lineage(fasta=silva.nr_v123.align, taxonomy=silva.nr_v123.tax, taxon=Bacteria);degap.seqs(fasta=silva.nr_v123.pick.align, processors=8)"
+	mv silva.nr_v123.pick.align $(REFS)/silva.bacteria.align
+	mv silva.nr_v123.pick.tax $(REFS)/silva.bacteria.tax
+	mv silva.nr_v123.pick.ng.fasta $(REFS)/silva.bacteria.fasta
+	rm Silva.nr_v123.tgz mothur*logfile silva.nr_v123.*
+
+
+# We also want the greengenes reference taxonomy. This version is from the  greengenes v13_8_99 and is
+# described at http://blog.mothur.org/2014/08/12/greengenes-v13_8_99-reference-files/
+
+$(REFS)/gg_13_8_99.% :
+	wget -N http://www.mothur.org/w/images/6/68/Gg_13_8_99.taxonomy.tgz
+	tar xvzf Gg_13_8_99.taxonomy.tgz gg_13_8_99.fasta gg_13_8_99.gg.tax
+	mv gg_13_8_99.* $(REFS)/
+	rm Gg_13_8_99.taxonomy.tgz
+
+
+# Next, we want the RDP reference taxonomy. The current version is v10 and we use a "special" pds version
+# of the database files, which are described at http://blog.mothur.org/2014/10/28/RDP-v10-reference-files/
+
+$(REFS)/trainset14_032015.% :
+	wget -N http://www.mothur.org/w/images/8/88/Trainset14_032015.pds.tgz
+	tar xvzf Trainset14_032015.pds.tgz trainset14_032015.pds/trainset14_032015.pds.*
+	mv trainset14_032015.pds/* $(REFS)/
+	rmdir trainset14_032015.pds
+	rm Trainset14_032015.pds.tgz
+
+
+# Finally, we want to align the mock community reference sequences to our newly created
+# silva.bacteria.fasta file...
+
+$(REFS)/HMP_MOCK.% :
+	wget --no-check-certificate -N -P $(REFS) https://raw.githubusercontent.com/SchlossLab/Kozich_MiSeqSOP_AEM_2013/master/data/references/HMP_MOCK.fasta
+	mothur "#align.seqs(fasta=$(REFS)/HMP_MOCK.fasta, reference=$(REFS)/silva.bacteria.align)"
+
+
+
+
+###########################################################################################################
+#
+# Part 2: BAM to fasta/qual files
+#
+# The goal of this part was to take the PacBio subreads files and convert them into fasta and qual files.
+# In some cases there were multiple movies per region per data generation event (e.g. june and  october of
+# 2015). The project root directory has several folders that are useful for this makefile, namely data/
+# and code/. Within data/ are raw_june/, mothur_june, raw_october, raw_june. These correspond to data dumps
+# that we received from pacbio in the specified month. the october data was for the longer regions with
+# longer movies.
 #
 ###########################################################################################################
 
