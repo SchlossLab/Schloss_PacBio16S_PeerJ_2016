@@ -162,8 +162,6 @@ $(FASTA_QUAL) : $$(addsuffix .fastq,$$(basename $$@))
 
 
 SAMPLES = mock soil human mouse
-#REP = 1 2 3
-#SAMPLE_REP = $(foreach S,$(SAMPLES),$(foreach R,$(REP),$S$R))
 
 SAMPLE_FASTA = $(foreach S,$(SAMPLES),$(foreach B,$(sort $(basename $(FASTA_QUAL))),$B.$S.fasta))
 SAMPLE_QUAL = $(subst fasta,qual,$(SAMPLE_FASTA))
@@ -195,4 +193,29 @@ $(SAMPLE_FASTA) $(SAMPLE_QUAL) $(SAMPLE_GROUPS) : $$(addsuffix .fasta,$$(basenam
 # Here we'll work with the mock community samples to get a sense of their error rate
 #
 ###########################################################################################################
+
+MOCK_FASTA = $(addsuffix .mock.fasta,$(sort $(basename $(basename $(SAMPLE_FASTA)))))
+MOCK_QUAL = $(subst fasta,qual,$(MOCK_FASTA))
+
+# The number of mismatches to the barcodes and primers is on the header line for each sequence in the trim 
+# file and is extracted here to a *.mismatches file
+
+MISMATCH = $(subst fasta,mismatches,$(MOCK_FASTA))
+
+$(MISMATCH) : $$(subst mismatches,fasta,$$@)
+	grep ">" $^ | cut -c 2- > $@
+
+
+
+# We are now ready to calculate the error rate for the various regions using the mock community and the
+# HMP_MOCK sequence data. We will use mothur to align the sequences to HMP_MOCK.align, determine the start
+# and end positions of the alignment, and calculate the error rate.
+
+data/mothur_june/V1-V3.mock.filter.error.summary : data/mothur_june/V1-V3.mock.fasta $(REFS)/HMP_MOCK.align
+	$(eval STUB = $(subst .fasta,,$<))
+	cp $(REFS)/HMP_MOCK.align $(STUB).HMP_MOCK.align
+	mothur "#align.seqs(fasta=$^, reference=$(STUB).HMP_MOCK.align, processors=8);\
+	    filter.seqs(fasta=$(ALIGN).align-$(STUB).HMP_MOCK.align, vertical=T);\
+	    summary.seqs();\
+	    seq.error(fasta=$(STUB).filter.fasta, reference=$(STUB).HMP_MOCK.filter.fasta, report=$(STUB).align.report,\ qfile=$(STUB).qual);"\
 
