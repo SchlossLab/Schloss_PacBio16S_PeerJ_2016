@@ -164,21 +164,21 @@ get_quality_score_report <- function(quality_score_file, sequences){
 
 generate_report <- function(report_file) {
 
-	error_summary_file <- gsub("report", "mock.filter.error.summary", report_file)
+	error_summary_file <- gsub("mock.report", "mock.filter.error.summary", report_file)
 	error_summary <- get_error_summary(error_summary_file)
 
 	sequence_names <- rownames(error_summary)
 
-	ccs_stats_file <- gsub("report", "ccs_stats", report_file)
+	ccs_stats_file <- gsub("mock.report", "ccs_stats", report_file)
 	coverage_pred_error <- get_coverage_pred_error(ccs_stats_file, sequence_names)
 
-	mismatches_file <- gsub("report", "mock.mismatches", report_file)
+	mismatches_file <- gsub("mock.report", "mock.mismatches", report_file)
 	mismatches <- get_mismatches(mismatches_file)
 
-	alignment_summary_file <- gsub("report", "mock.filter.summary", report_file)
+	alignment_summary_file <- gsub("mock.report", "mock.filter.summary", report_file)
 	alignment_quality <- get_alignment_quality(alignment_summary_file, sequence_names)
 
-	qual_file <- gsub("report", "mock.qual", report_file)
+	qual_file <- gsub("mock.report", "mock.qual", report_file)
 	quality_score_report <- get_quality_score_report(qual_file)
 
 
