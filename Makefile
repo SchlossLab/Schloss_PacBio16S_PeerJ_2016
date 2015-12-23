@@ -241,7 +241,7 @@ $(ALIGN_SUMMARY) : $$(subst filter.summary,fasta,$$@) $$(subst filter.summary,qu
 	mothur "#align.seqs(fasta=$(FASTA), reference=$(STUB).HMP_MOCK.align, processors=8);\
 	    filter.seqs(fasta=$(STUB).align-$(STUB).HMP_MOCK.align, vertical=T);\
 	    summary.seqs();\
-	    seq.error(fasta=$(STUB).filter.fasta, reference=$(STUB).HMP_MOCK.filter.fasta, report=$(STUB).align.report, qfile=$(STUB).qual);"
+	    seq.error(fasta=$(STUB).filter.fasta, reference=$(STUB).HMP_MOCK.filter.fasta, report=$(STUB).align.report, qfile=$(QUAL));"
 	rm $(STUB).align*
 	rm $(STUB).filter.fasta
 	rm $(STUB).filter.error.seq
@@ -253,9 +253,7 @@ $(ALIGN_SUMMARY) : $$(subst filter.summary,fasta,$$@) $$(subst filter.summary,qu
 	rm $(STUB).filter.error.ref
 	rm $(STUB).HMP_MOCK*
 
-
 $(ERROR_SUMMARY) $(ERROR_MATRIX) $(ERROR_QUALITY) : $$(subst error,summary,$$(basename $$@))
-
 
 
 # Now we need to synthesize the various output files into a report that we can
