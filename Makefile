@@ -262,9 +262,9 @@ $(ERROR_SUMMARY) $(ERROR_MATRIX) $(ERROR_QUALITY) : $$(subst error,summary,$$(ba
 MOCK_REPORT = $(subst filter.summary,report,$(ALIGN_SUMMARY))
 
 $(MOCK_REPORT) : code/consolidate_data.R\
-				$(subst report,filter.error.summary,$@)\
-				$(subst mock.report,ccs_stats,$@)\
-				$(subst report,mismatches,$@)\
-				$(subst report,filter.summary,$@)\
-				$(subst report,qual,$@)
-	R -e "source('$^');generate_report('$@')"
+				$$(subst report,filter.error.summary,$$@)\
+				$$(subst mock.report,ccs_stats,$$@)\
+				$$(subst report,mismatches,$$@)\
+				$$(subst report,filter.summary,$$@)\
+				$$(subst report,qual,$$@)
+	R -e "source('$<');generate_report('$@')"
