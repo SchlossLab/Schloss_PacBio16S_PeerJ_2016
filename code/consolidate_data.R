@@ -188,12 +188,16 @@ generate_report <- function(report_file) {
 	stopifnot(sum(rownames(error_summary) != rownames(alignment_quality)) == 0)
 	stopifnot(sum(rownames(error_summary) != rownames(quality_score_report)) == 0)
 
+	batch <- rep(gsub("data/mothur_(.*)/.*", "\\1", report_file), nrow(error_summary))
+	
+
 	report_data <- cbind(
 		error_summary,
 		coverage_pred_error,
 		mismatches,
 		alignment_quality,
-		quality_score_report
+		quality_score_report,
+		batch
 	)
 
 	write.table(report_data, file=report_file, quote=F)

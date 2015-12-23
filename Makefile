@@ -268,3 +268,16 @@ $(MOCK_REPORT) : code/consolidate_data.R\
 				$$(subst report,filter.summary,$$@)\
 				$$(subst report,qual,$$@)
 	R -e "source('$<');generate_report('$@')"
+
+
+# Let's pool the june and october data together, where appropriate and toss the output
+# into the data/process folder
+
+POOL_REPORT = $(sort $(subst mothur_october,process,$(subst mothur_june,process,$(MOCK_REPORT))))
+
+$(POOL_REPORT) : $$(filter %$$(notdir $$@), $$(MOCK_REPORT))
+	$(eval FIRST = $(word 1, $^))
+	$(eval SECOND = $(word 2, $^))
+	@echo $(FIRST) $(SECOND)
+	cp $(FIRST) $@
+	$(if $(SECOND),	tail -n +2 $(SECOND) >> $@,)
