@@ -223,60 +223,44 @@ System.
 
 
 ***Data analysis.***
-All sequencing data were curated using mothur {Schloss, 2009 #1816} and
-analyzed using the R programming language {R Core Team, 2014 #3456}. The raw
-data can be obtained from the Sequence Read Archive at NCBI under accession
-SRP051686, which are associated with BioProject PRJNA271568. Several specific
-features were incorporated into mothur to
-facilitate the analysis of PacBio  sequence data.  First, because non-ambiguous
-base calls are assigned to Phred quality scores of zero, the consensus fastq
-files were parsed so that scores of zero were interpreted as corresponding to an
-ambiguous base call (i.e. N) in the  fastq.info command using the pacbio=T
-option. Second, because the consensus  sequence can be generated in the forward
-and reverse complement orientations, a checkorient option was added to the
-trim.seqs command in order to identify the  proper orientation. These features
-were incorporated into mothur v.1.30. Because chimeric molecules can be
-generated during PCR and would artificially inflate the sequencing error, it was
-necessary to remove these data prior to assessing the error rate. Because we
-knew the true sequences for the strains in the mock community we could calculate
-all possible chimeras between strains in the mock community (*in silico*
-chimeras). If a sequence read was 3 or more nucleotides more similar to an *in
-silico* chimera than it was to a non-chimeric reference sequence, it was
-classified as a chimera and removed from further consideration. Identification
-of *in silico* chimeras and calculation of sequencing error rates
+All sequencing data were curated using mothur {Schloss, 2009 #1816} and analyzed
+using the R programming language {R Core Team, 2014 #3456}. The raw data can be
+obtained from the Sequence Read Archive at NCBI under accession SRP051686, which
+are associated with BioProject PRJNA271568. Several specific features were
+incorporated into mothur to facilitate the analysis of PacBio  sequence data.
+First, because non-ambiguous base calls are assigned to Phred quality scores of
+zero, the consensus fastq files were parsed so that scores of zero were
+interpreted as corresponding to an ambiguous base call (i.e. N) in the
+fastq.info command using the pacbio=T option. Second, because the consensus
+sequence can be generated in the forward and reverse complement orientations, a
+checkorient option was added to the trim.seqs command in order to identify the
+proper orientation. These features were incorporated into mothur v.1.30. Because
+chimeric molecules can be generated during PCR and would artificially inflate
+the sequencing error, it was necessary to remove these data prior to assessing
+the error rate. Because we knew the true sequences for the strains in the mock
+community we could calculate all possible chimeras between strains in the mock
+community (*in silico* chimeras). If a sequence read was 3 or more nucleotides
+more similar to an *in silico* chimera than it was to a non-chimeric reference
+sequence, it was classified as a chimera and removed from further consideration.
+Identification of *in silico* chimeras and calculation of sequencing error rates
 was performed using the seq.error command in mothur {Schloss, 2011 #2466}. *De
 novo* chimera detection was also performed on the mock and other sequence data
 using the abundance-based algorithm implemented in UCHIME {Edgar, 2011 #2406}.
 Sequences sequences were aligned against a SILVA-based reference alignment
 {Pruesse, 2007 #1735} using a profile-based aligner {Schloss, 2009 #1825} and
 were classified against the SILVA {Pruesse, 2007 #1735}, RDP {Cole, 2014 #3460},
-and greengenes {Werner, 2012 #2474} reference taxonomies  using a
-naive Bayesian classifier {Wang, 2007 #1809}. Sequences were assigned to
-operational taxonomic units using the average neighbor clustering algorithm with
-a 3% distance threshold {Schloss, 2011 #3156}.  Detailed methods including this
-paper as an R markdown file are available as a public online repository
+and greengenes {Werner, 2012 #2474} reference taxonomies  using a naive Bayesian
+classifier {Wang, 2007 #1809}. Sequences were assigned to operational taxonomic
+units using the average neighbor clustering algorithm with a 3% distance
+threshold {Schloss, 2011 #3156}.  Detailed methods including this paper as an R
+markdown file are available as a public online repository
 (http://github.com/SchlossLab/ Schloss_PacBio16S_PeerJ_2015).
 
 ```{r setup, echo=FALSE, eval=TRUE, tidy=TRUE}
-rm(list=ls())
-library("knitr")
-#pdf.options(encoding="ISOLatin2.enc")
 regions <- c("v4", "v13", "v35", "v15", "v16", "v19")
 clrs <- rainbow(length(regions))
 pretty.region <- c("v13"="V1-V3", "v15"="V1-V5", "v16"="V1-V6", "v19"="V1-V9", "v35"="V3-V5", "v4"="V4")
 names(clrs) <- regions
-
-
-opts_chunk$set("fig.path"="figures/")
-opts_chunk$set("fig.align"="center")
-opts_chunk$set("dev" = c("png", "cairo_pdf"))
-
-opts_chunk$set("tidy" = TRUE)
-opts_chunk$set("echo" = FALSE)
-opts_chunk$set("eval" = TRUE)
-opts_chunk$set("results" = 'hide')
-opts_chunk$set("warning" = FALSE)
-opts_chunk$set("cache" = TRUE)
 ```
 
 ## Results and Discussion
