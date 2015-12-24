@@ -273,7 +273,19 @@ $(MOCK_REPORT) : code/consolidate_data.R\
 # Let's pool all of the mock report files together and toss the output into the
 # data/process folder
 
-data/process/mock.report : $(MOCK_REPORT)
+data/process/mock.error.report : $(MOCK_REPORT)
 	$(eval FIRST = $(word 1, $^))
 	head -n 1 $(FIRST) > $@
-	tail -n +2 $^ >> $@
+	for FILE in $^; do tail -n +2 $$FILE >> $@; done
+
+# Let's compress this final file to have a smaller version that we can put in the repo
+
+data/process/mock.error.report.gz : data/process/mock.error.report
+	gzip < $^ > $@
+
+
+# Let's pool the *.error.quality files into a single file to see whether there are
+# relationships between quality scores and specific error types
+
+data/process/mock.quality.report : $(ERROR_QUALITY)
+	R -e "source('code/pool_error_quality.R'); pool('$^')"

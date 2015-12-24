@@ -4,7 +4,9 @@
 
 
 data/*/*
-!data/process/*
+!data/process/
+data/process/mock.error.report
+
 !README.md
 
 *.qsub*
@@ -14,7 +16,7 @@ mothur*logfile
 
 
 code/smrt*
-code/pbccs/*
+code/pbccs
 
 head.batch
 tail.batch
