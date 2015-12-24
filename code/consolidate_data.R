@@ -189,7 +189,7 @@ generate_report <- function(report_file) {
 	stopifnot(sum(rownames(error_summary) != rownames(quality_score_report)) == 0)
 
 	batch <- rep(gsub("data/mothur_(.*)/.*", "\\1", report_file), nrow(error_summary))
-	
+	region <- rep(gsub("data/mothur_.*/(V.*).mock.*", "\\1", report_file), nrow(error_summary))
 
 	report_data <- cbind(
 		error_summary,
@@ -197,7 +197,8 @@ generate_report <- function(report_file) {
 		mismatches,
 		alignment_quality,
 		quality_score_report,
-		batch
+		batch,
+		region
 	)
 
 	write.table(report_data, file=report_file, quote=F)
