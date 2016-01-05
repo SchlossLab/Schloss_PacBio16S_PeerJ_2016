@@ -289,3 +289,6 @@ data/process/mock.error.report.gz : data/process/mock.error.report
 
 data/process/mock.quality.report : $(ERROR_QUALITY)
 	R -e "source('code/pool_error_quality.R'); pool('$^')"
+
+data/process/mock.quality.report.gz : data/process/mock.quality.report
+	gzip < $^ > $@
