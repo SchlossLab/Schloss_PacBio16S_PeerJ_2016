@@ -671,8 +671,8 @@ we had obtained 10-fold coverage of the fragments, the error rate did not change
 appreciably (Figure 1C). When we compared the error rates of reads with at least
 10-fold coverage to those with less coverage, we reduced the error rate by
 `r paste(format(range(coverage_reduction), digits=3, nsmall=1), collapse=" to ")`%
-(Figure 2). Third, based on the earlier analysis finding a relationship between the
-predicted error rate and the observed error rate, we sought a minimum predicted
+(Figure 2). Third, based on the observed correlation between the
+predicted and observed error rates, we sought to identify a minimum predicted
 error rate that would allow us to reduce the observed error rate. The average
 observed error rate for sequences with predicted error rates between 0.01 and
 0.10% was linear (Figure 1D). We decided to use a threshold of 0.01% because a
