@@ -5,7 +5,7 @@ output:
   pdf_document:
     includes:
       in_header: header.tex
-csl: mbio.csl
+csl: peerj.csl
 fontsize: 11pt
 geometry: margin=1.0in
 ---
