@@ -33,6 +33,10 @@ inline_hook <- function(x){
 }
 knitr::knit_hooks$set(inline=inline_hook)
 
+regions <- c("v4", "v13", "v35", "v15", "v16", "v19")
+clrs <- rainbow(length(regions))
+pretty.region <- c("v13"="V1-V3", "v15"="V1-V5", "v16"="V1-V6", "v19"="V1-V9", "v35"="V3-V5", "v4"="V4")
+names(clrs) <- regions
 ```
 
 \vspace{35mm}
@@ -57,7 +61,7 @@ $\dagger$ To whom correspondence should be addressed: pschloss@umich.edu
 \linenumbers
 
 
-## Abstract
+## Abstract [ Revise ]
 Over the past 10 years, microbial ecologists have largely abandoned sequencing
 16S rRNA genes by the Sanger sequencing method and have instead adopted highly
 parallelized sequencing platforms. These new platforms, such as 454 and
@@ -86,7 +90,7 @@ sequencing data relative to the other available platforms.
 
 
 
-## Introduction
+## Introduction [ Revise ]
 Advances in sequencing technologies over the past 10 years have introduced
 considerable advances to the field of microbial ecology. Clone-based Sanger
 sequencing of the 16S rRNA gene has largely been replaced by various platforms
@@ -210,7 +214,7 @@ Committee on Use and Care of Animals (Protocol #PRO00004877) and the
 Institutional Review Board at the University of Michigan (Protocol
 #HUM00057066). The human stool donor provided informed consent.
 
-***Library generation and sequencing.***
+***Library generation and sequencing.*** [ Revise ]
 The DNAs were each amplified in triplicate using barcoded primers targeting the
 V4, V1-V3, V3-V5, V1-V5, V1-V6, and V1-V9 variable regions (Table 1). The
 primers were synthesized so that the 5’ end of the forward and reverse primers
@@ -222,7 +226,7 @@ Biosciences using the P6-C24 chemistry on a PacBio RS II SMRT DNA Sequencing
 System.
 
 
-***Data analysis.***
+***Data analysis.***  [ Revise ]
 All sequencing data were curated using mothur {Schloss, 2009 #1816} and analyzed
 using the R programming language {R Core Team, 2014 #3456}. The raw data can be
 obtained from the Sequence Read Archive at NCBI under accession SRP051686, which
@@ -256,12 +260,6 @@ threshold {Schloss, 2011 #3156}.  Detailed methods including this paper as an R
 markdown file are available as a public online repository
 (http://github.com/SchlossLab/ Schloss_PacBio16S_PeerJ_2015).
 
-```{r setup, echo=FALSE, eval=TRUE, tidy=TRUE}
-regions <- c("v4", "v13", "v35", "v15", "v16", "v19")
-clrs <- rainbow(length(regions))
-pretty.region <- c("v13"="V1-V3", "v15"="V1-V5", "v16"="V1-V6", "v19"="V1-V9", "v35"="V3-V5", "v4"="V4")
-names(clrs) <- regions
-```
 
 ## Results and Discussion
 
