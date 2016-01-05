@@ -37,6 +37,10 @@ regions <- c("v4", "v13", "v35", "v15", "v16", "v19")
 clrs <- rainbow(length(regions))
 pretty.region <- c("v13"="V1-V3", "v15"="V1-V5", "v16"="V1-V6", "v19"="V1-V9", "v35"="V3-V5", "v4"="V4")
 names(clrs) <- regions
+
+mock_error <- read.table(file="data/process/mock.error.report")
+mock_error_nochim <- mock_error[mock_error$numparents==1,]
+mock_error_good <- mock_error_nochim[mock_error_nochim$error <= 0.10,]
 ```
 
 \vspace{35mm}
@@ -264,80 +268,100 @@ markdown file are available as a public online repository
 ## Results and Discussion
 
 ```{r error_profile}
-sub.matrix <- read.table(file=paste("pipeline_dev/", regions[1], "/", regions[1], ".mock.filter.error.matrix", sep=""), header=T, row.names=1)[-7,]
-for(i in 2:length(regions)){
-	sub.matrix <- sub.matrix + read.table(file=paste("pipeline_dev/", regions[i], "/", regions[i], ".mock.filter.error.matrix", sep=""), header=T, row.names=1)[-7,]
-}
+mutations <- c("AA", "AT", "AG", "AC", "TA", "TT", "TG", "TC", "GA", "GT", "GG", "GC", "CA", "CT", "CG", "CC", "Ai", "Ti", "Gi", "Ci", "dA", "dT", "dG", "dC")
 
-matches <- c(sub.matrix[1,1], sub.matrix[2,2], sub.matrix[3,3], sub.matrix[4,4])
-total <- sum(sub.matrix)
-errors <- sub.matrix
-diag(errors[1:4,1:4]) <- 0
-init.error.rate <- 100 * sum(errors) / total				#1.925717
+mutation_table <- mock_error_good[, which(colnames(mock_error_good)%in%mutations)]
+mutation_count <- apply(mutation_table, 2, sum)
 
-subst.bias <- apply(errors[1:4,1:4], 2, sum)/apply(sub.matrix[1:4,1:4], 2, sum)
-subst.bias <- 100 * subst.bias/sum(subst.bias)
-#       rA        rT        rG        rC
-# 22.43918 27.21620 24.06557 26.27904
-#these are more or less equal to each other
+mutation_total <- sum(mutation_count)
+matches <- sum(mutation_count[c("AA", "TT", "GG", "CC")])
+mis_matches <- mutation_total - matches
+init_error_rate <- 100 * mis_matches / mutation_total		#0.6514488
 
-insert.bias <- (sub.matrix[,"rGap"]/apply(sub.matrix, 1, sum))[1:4]
-insert.bias <- 100 * insert.bias/sum(insert.bias)
-#       qA       qT       qG       qC
-# 23.46112 24.36667 24.33064 27.84157
-#these are more or less equal to each other
 
-delete.bias <- (sub.matrix["qGap",]/apply(sub.matrix, 2, sum))[1:4]
-delete.bias <- 100 * delete.bias/sum(delete.bias)
-#           rA      rT       rG       rC
-#qGap 11.43234 9.46907 44.57506 34.52353
-#interestingly the G's and C's are more likely to be deleted than the As or Ts
+#substitutions
+substitutions <- mutations[grep("[ATGC].", mutations)]
+substitutions <- substitutions[grep(".[ATGC]", substitutions)]
+substitutions <- substitutions[! substitutions %in% c("AA", "TT", "GG", "CC")]
+substitution_counts <- mutation_count[substitutions]
+substitution_total <- sum(substitution_counts)
+substitution_bias <- substitution_counts / substitution_total
 
-substitutions <- 100*sum(errors[1:4,1:4])/sum(errors)	#35.80084
-insertions <- 100*sum(errors[,5])/sum(errors)			#45.27368
-deletions <- 100*sum(errors[5,])/sum(errors)			#17.27259
-ambiguous <- 100*sum(errors[6,])/sum(errors)			#2.101505
+reference <- gsub(".(.)", "\\1", names(substitution_bias))
+# aggregate(substitution_bias, by=list(reference), mean)
+#
+# Group.1          x
+# 1       A 0.10192188
+# 2       C 0.05944286
+# 3       G 0.07434043
+# 4       T 0.09762816
+
+substitution_rate <- 100 * substitution_total / mis_matches
+
+# [1] 50.90346
+
+
+#deletions
+deletion_counts <- mutation_count[grep("d.", mutations)]
+deletion_total <- sum(deletion_counts)
+deletion_bias <- 100 * deletion_counts / deletion_total
+
+#dA        dT        dG        dC
+#24.25770 17.99132 39.44415 18.30683
+
+deletion_rate <- 100 * deletion_total / mis_matches
+
+#[1] 17.93361
+
+#insertions
+insertion_counts <- mutation_count[grep(".i", mutations)]
+insertion_total <- sum(insertion_counts)
+insertion_bias <- 100 * insertion_counts / insertion_total
+
+#Ai        Ti        Gi        Ci
+#23.13509 19.63951 30.05906 27.16633
+
+insertion_rate <- 100 * insertion_total / mis_matches
+
+#[1] 31.16293
+
 
 
 # Need to connect error types with the quality scores
-error.quality <- read.table(file=paste("pipeline_dev/", regions[1], "/", regions[1], ".mock.filter.error.quality", sep=""), header=T, row.names=1)[-7,]
-for(i in 2:length(regions)){
-	error.quality <- error.quality + read.table(file=paste("pipeline_dev/", regions[i], "/", regions[i], ".mock.filter.error.quality", sep=""), header=T, row.names=1)[-7,]
-}
-error.quality["72",] <- error.quality["72",] + error.quality["80",]
-error.quality <- error.quality[1:72,]
+error_quality <- read.table(file="data/process/mock.quality.report", header=T, row.names=1)
 
 #get quantiles
-matches <- rep(as.numeric(rownames(error.quality)), error.quality$matches)
+matches <- rep(as.numeric(rownames(error_quality)), error_quality$matches)
 m.quant <- quantile(matches, prob=c(0.025, 0.25, 0.5, 0.75, 0.975))
+m.94 <- 100 * sum(matches >= 94)/length(matches)
+# [1] 80.52649
 
-subs <- rep(as.numeric(rownames(error.quality)), error.quality$substitutions)
+subs <- rep(as.numeric(rownames(error_quality)), error_quality$substitutions)
 s.quant <- quantile(subs, prob=c(0.025, 0.25, 0.5, 0.75, 0.975))
+s.94 <- 100 * sum(subs >= 94)/length(subs)
+# [1] 79.96451
 
-ins <- rep(as.numeric(rownames(error.quality)), error.quality$insertions)
+ins <- rep(as.numeric(rownames(error_quality)), error_quality$insertions)
 i.quant <- quantile(ins, prob=c(0.025, 0.25, 0.5, 0.75, 0.975))
-
-ambig <- rep(as.numeric(rownames(error.quality)), error.quality$ambiguous)
-a.quant <- quantile(ambig, prob=c(0.025, 0.25, 0.5, 0.75, 0.975))
+i.94 <- 100 * sum(ins >= 94)/length(ins)
+# [1] 80.35283
 ```
+
+
+
 ***The PacBio error profile.***
 To build a sequence curation pipeline, we first needed to characterize the error
 rate associated with sequencing the 16S rRNA gene. We observed an average
-sequencing error rate of `r format(init.error.rate, digits=3, nsmall=2)`%. Insertions, deletions, substitutions, and ambiguous base calls
-accounted for `r format(insertions, digits=3, nsmall=1)`,
-`r format(deletions, digits=3, nsmall=1)`, `r format(substitutions, digits=3, nsmall=1)`,
-and `r format(ambiguous, digits=2, nsmall=1)`% of
-the errors, respectively. The substitution errors were equally likely and all four bases
+sequencing error rate of `r format(100*init_error_rate, digits=2, nsmall=2)`%. Insertions, deletions, and substitutions
+accounted for `r format(insertion_rate, digits=3, nsmall=1)`,
+`r format(deletion_rate, digits=3, nsmall=1)`, and `r format(substitution_rate, digits=3, nsmall=1)`% of the errors, respectively. The substitution errors were equally
+likely and all four bases
 were equally likely to cause insertion errors. Interestingly, guanines
-(`r format(delete.bias["rG"], digits=3, nsmall=1)`%) and cytosines
-(`r format(delete.bias["rC"], digits=3, nsmall=1)`%) were more likely to be deleted
-than adenines (`r format(delete.bias["rA"], digits=3, nsmall=1)`%) or thymidines
-(`r format(delete.bias["rT"], digits=2, nsmall=1)`%). When we considered the Phred
-quality score of each base call, we observed a median quality score of `r m.quant["50%"]`
-for correct base calls and scores of `r s.quant["50%"]` and `r i.quant["50%"]` for
-substitutions and insertions, respectively (Figure 1A). Although there
-was a broad distribution of quality scores with each type of base call, the errors could
-largely be distinguished from the correct base calls.
+(`r format(deletion_bias["dG"], digits=3, nsmall=1)`%) and adenines
+(`r format(deletion_bias["dA"], digits=3, nsmall=1)`%) were more likely to be deleted
+than cytosines (`r format(deletion_bias["dC"], digits=3, nsmall=1)`%) or thymidines
+(`r format(deletion_bias["dT"], digits=2, nsmall=1)`%). The PacBio quality values varied between
+`r paste(range(c(matches, subs, ins)), collapse=' and ')`. Surprisingly, the percentage of base calls that had the maximum quality value did not vary among correct base calls (`r format(m.94, digits=3, nsmall=1)`%), substitutions (`r format(s.94, digits=3, nsmall=1)`%), and insertions (`r format(i.94, digits=3, nsmall=1)`%). Although the individual base quality scores could not be used to screen sequence quality, we observed a strong correlation between our observed error rate and the predicted error rate as calculated by the PacBio software (Pearson's R: `r format(cor(mock_error_good$error, mock_error_good$pred_error), digits=2, nsmall=2)`; Figure 1A).
 
 
 ```{r initialError}
@@ -388,7 +412,7 @@ To establish a simple curation procedure, we culled any sequence that contained
 an ambiguous base call, had a string of the same base repeated 9 or more times,
 did not start and end at the expected alignment coordinates for that region
 of the 16S rRNA gene, or that was chimeric. This reduced the experiment-wide
-error rate from `r format(init.error.rate, digits=3, nsmall=2)` to
+error rate from `r format(init_error_rate, digits=3, nsmall=2)` to
 `r format(composite.basic.error, digits=2, nsmall=2)`%. This basic procedure
 resulted in the removal of between
 `r format(round(min(100*(1-reasons.lost[,"good"])), digits=1), nsmall=1)`
@@ -1084,6 +1108,7 @@ knitr::kable(reasons.lost, digits=1, row.names=TRUE,
 
 ## Figures
 
+[revise - Fig 1A plot predicted error rate vs observed error rate]
 **Figure 1. Summary of errors in data generated using PacBio sequencing platform
 to sequence various regions within the 16S rRNA gene.** Quality scores varied
 with error types (A). The sequencing error rate of the amplified gene fragments
