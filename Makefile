@@ -27,17 +27,24 @@ REFS = data/references
 # We want the latest greatest reference alignment and the SILVA reference
 # alignment is the best reference alignment on the market. This version is from
 # v123 and described at http://blog.mothur.org/2014/08/08/SILVA-v119-reference-files/.
-# We will use the full-length version of the database, which contains 137,879
+# We will use the SEED and NR versions of the database, which contain 12,083 and 152,308
 # bacterial sequences. This also contains the reference taxonomy. We will limit
 # the databases to only include bacterial sequences.
 
-$(REFS)/silva.bacteria.% :
+$(REFS)/silva.seed.align :
+	wget -N http://mothur.org/w/images/1/15/Silva.seed_v123.tgz
+	tar xvzf Silva.seed_v123.tgz silva.seed_v123.align silva.seed_v123.tax
+	mothur "#get.lineage(fasta=silva.seed_v123.align, taxonomy=silva.seed_v123.tax, taxon=Bacteria);degap.seqs(fasta=silva.seed_v123.pick.align, processors=8)"
+	mv silva.seed_v123.pick.align $(REFS)/silva.seed.align
+	rm Silva.seed_v123.tgz mothur*logfile silva.seed_v123.*
+
+
+$(REFS)/silva.nr.% :
 	wget -N http://mothur.org/w/images/b/be/Silva.nr_v123.tgz
 	tar xvzf Silva.nr_v123.tgz silva.nr_v123.align silva.nr_v123.tax
 	mothur "#get.lineage(fasta=silva.nr_v123.align, taxonomy=silva.nr_v123.tax, taxon=Bacteria);degap.seqs(fasta=silva.nr_v123.pick.align, processors=8)"
-	mv silva.nr_v123.pick.align $(REFS)/silva.bacteria.align
-	mv silva.nr_v123.pick.tax $(REFS)/silva.bacteria.tax
-	mv silva.nr_v123.pick.ng.fasta $(REFS)/silva.bacteria.fasta
+	mv silva.nr_v123.pick.tax $(REFS)/silva.nr.tax
+	mv silva.nr_v123.pick.ng.fasta $(REFS)/silva.nr.fasta
 	rm Silva.nr_v123.tgz mothur*logfile silva.nr_v123.*
 
 
@@ -65,11 +72,12 @@ $(REFS)/trainset14_032015.% :
 
 
 # Now, we want to align the mock community reference sequences to our newly
-# created silva.bacteria.fasta file...
+# created silva.seed.align file...
 
-$(REFS)/HMP_MOCK.% :
+$(REFS)/HMP_MOCK.% : $(REFS)/silva.seed.align
 	wget --no-check-certificate -N -P $(REFS) https://raw.githubusercontent.com/SchlossLab/Kozich_MiSeqSOP_AEM_2013/master/data/references/HMP_MOCK.fasta
-	mothur "#align.seqs(fasta=$(REFS)/HMP_MOCK.fasta, reference=$(REFS)/silva.bacteria.align)"
+	mothur "#align.seqs(fasta=$(REFS)/HMP_MOCK.fasta, reference=$^)"
+	rm $@.report
 
 
 
@@ -311,4 +319,31 @@ $(POOL_CCS_STATS) : $(CCS_STATS)
 	$(eval F = $(notdir $@))
 	cat $(filter %$F, $(CCS_STATS)) > $@
 
-#---> Want to get SILVA seed reference, not nr?
+
+
+PRED_ERROR_SCREEN = $(subst fasta,screen.fasta,$(POOL_FASTA))
+$(PRED_ERROR_SCREEN) : $$(addsuffix .ccs_stats, $$(basename $$(basename $$(basename $$@))))\
+			$$(addsuffix .fasta, $$(basename $$(basename $$@)))\
+			code/pred_error_screen.R
+	$(eval CCS_STATS = $(word 1, $^))
+	$(eval FASTA = $(word 2, $^))
+	R -e 'source("code/pred_error_screen.R");pred_error_screen("$(FASTA)", "$(CCS_STATS)")'
+
+
+
+
+UNIQUE_FASTA = $(subst fasta,unique.good.filter.unique.fasta,$(PRED_ERROR_SCREEN))
+UNIQUE_NAMES = $(subst unique.fasta,names,$(UNIQUE_FASTA))
+UNIQUE_FILES = $(UNIQUE_FASTA) $(UNIQUE_NAMES)
+$(UNIQUE_FILES) : $$(subst unique.good.filter.names,fasta,$$(subst unique.fasta,names,$$@)) code/get_unique_pc_fasta.sh
+	bash code/get_unique_pc_fasta.sh $<
+
+
+
+#pipeline
+#	unique - seq.error
+#	pre.cluster
+#	pre.cluster - seq.error
+#	chimera.uchime
+#	cluster w/ uchime
+#	cluster w/ seq.error
