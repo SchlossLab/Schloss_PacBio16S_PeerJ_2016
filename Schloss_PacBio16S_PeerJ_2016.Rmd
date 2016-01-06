@@ -1115,12 +1115,13 @@ represent the region that was sequenced. For example "15" represents the data
 for the V1-V5 region.
 
 
+[ This figure removed ]
 **Figure 3. The relationship between the error rate of each region and the
 composite quality scores for the sequences.** The error rates (A and C) and
 percentage of sequences (B and D) were calculated for the reads that had a
 composite quality score above the plotted value. The composite quality scores
 were calculated by either determining the minimum value of the average quality
-score wihin all 50-nt windows within each region (A and B) or by calculating
+score within all 50-nt windows within each region (A and B) or by calculating
 the average quality score across the entire sequence read (C and D).
 
 
