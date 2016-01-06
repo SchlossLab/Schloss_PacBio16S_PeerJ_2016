@@ -334,16 +334,33 @@ $(PRED_ERROR_SCREEN) : $$(addsuffix .ccs_stats, $$(basename $$(basename $$(basen
 
 UNIQUE_FASTA = $(subst fasta,unique.good.filter.unique.fasta,$(PRED_ERROR_SCREEN))
 UNIQUE_NAMES = $(subst unique.fasta,names,$(UNIQUE_FASTA))
+PRECLUSTER_FASTA = $(subst fasta,precluster.fasta,$(UNIQUE_FASTA)) 
+PRECLUSTER_NAME = $(subst fasta,names,$(PRECLUSTER_FASTA))
+
 UNIQUE_FILES = $(UNIQUE_FASTA) $(UNIQUE_NAMES)
 $(UNIQUE_FILES) : $$(subst unique.good.filter.names,fasta,$$(subst unique.fasta,names,$$@)) code/get_unique_pc_fasta.sh
 	bash code/get_unique_pc_fasta.sh $<
+
+PRECLUSTER_FILES = $(PRECLUSTER_FASTA) $(PRECLUSTER_NAMES)
+$(PRECLUSTER_FILES) : $$(subst unique.good.filter.unique.precluster,fasta,$$(basename $$@)) code/get_unique_pc_fasta.sh
+	bash code/get_unique_pc_fasta.sh $<
+
+
+
+CHIMERA_FASTA = $(subst fasta,pick.fasta,$(PRECLUSTER_FASTA))
+CHIMERA_NAMES = $(subst names,pick.names,$(PRECLUSTER_NAMES))
+CHIMERA = $(CHIMERA_FASTA) $(CHIMERA_NAMES)
+$(CHIMERA) : $$(addsuffix .fasta,$$(basename $$(basename $$@))) $$(addsuffix .names,$$(basename $$(basename $$@)))
+	$(eval F=$(word 1,$^))
+	$(eval N=$(word 2,$^))
+	mothur "#chimera.uchime(fasta=$F, name=$N);remove.seqs(fasta=current, name=current, accnos=current)"
+
 
 
 
 #pipeline
 #	unique - seq.error
-#	pre.cluster
 #	pre.cluster - seq.error
-#	chimera.uchime
+
 #	cluster w/ uchime
 #	cluster w/ seq.error
