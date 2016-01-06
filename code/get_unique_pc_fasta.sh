@@ -74,4 +74,3 @@ rm $STUB.unique.align
 rm $STUB.unique.flip.accnos
 rm $STUB.names
 rm $STUB.unique.fasta
-rm *.filter
