@@ -188,7 +188,7 @@ SAMPLE_FASTA = $(foreach S,$(SAMPLES),$(foreach B,$(sort $(basename $(FASTA_QUAL
 SAMPLE_QUAL = $(subst fasta,qual,$(SAMPLE_FASTA))
 SAMPLE_GROUPS = $(subst fasta,groups,$(SAMPLE_FASTA))
 
-$(SAMPLE_FASTA) $(SAMPLE_QUAL) $(SAMPLE_GROUPS) : $$(addsuffix .fasta,$$(basename $$(basename $$@))) $$(addsuffix .qual,$$(basename $$(basename $$@))) data/references/pacbio.oligos
+$(SAMPLE_FASTA) $(SAMPLE_QUAL) $(SAMPLE_GROUPS) : $$(addsuffix .fasta,$$(basename $$(basename $$@))) $$(addsuffix .qual,$$(basename $$(basename $$@))) $(REFS)/pacbio.oligos
 	$(eval RAW_FASTA = $(word 1, $^))
 	$(eval RAW_QUAL = $(word 2, $^))
 	$(eval OLIGOS = $(word 3, $^))
@@ -341,9 +341,29 @@ UNIQUE_FILES = $(UNIQUE_FASTA) $(UNIQUE_NAMES)
 $(UNIQUE_FILES) : $$(subst unique.good.filter.names,fasta,$$(subst unique.fasta,names,$$@)) code/get_unique_pc_fasta.sh
 	bash code/get_unique_pc_fasta.sh $<
 
+
+UNIQUE_ERROR = $(subst fasta,error.summary,$(filter %.mock.screen.unique.good.filter.unique.fasta,$(UNIQUE_FASTA)))
+$(UNIQUE_ERROR) : $$(subst error.summary,fasta,$$@) $$(subst unique.error.summary,names,$$@) $(REFS)/HMP_MOCK.fasta
+	$(eval F=$(word 1,$^))
+	$(eval N=$(word 2,$^))
+	mothur "#seq.error(fasta=$F, name=$N, reference=$(REFS)/HMP_MOCK.fasta, processors=8, aligned=F)"
+
+
+
+
 PRECLUSTER_FILES = $(PRECLUSTER_FASTA) $(PRECLUSTER_NAMES)
 $(PRECLUSTER_FILES) : $$(subst unique.good.filter.unique.precluster,fasta,$$(basename $$@)) code/get_unique_pc_fasta.sh
 	bash code/get_unique_pc_fasta.sh $<
+
+
+
+
+PRECLUSTER_ERROR = $(subst fasta,error.summary,$(filter %.mock.screen.unique.good.filter.unique.precluster.fasta,$(PRECLUSTER_FASTA)))
+$(PRECLUSTER_ERROR) : $$(subst error.summary,fasta,$$@) $$(subst error.summary,names,$$@) $(REFS)/HMP_MOCK.fasta
+	$(eval F=$(word 1,$^))
+	$(eval N=$(word 2,$^))
+	mothur "#seq.error(fasta=$F, name=$N, reference=$(REFS)/HMP_MOCK.fasta, processors=8, aligned=F)"
+
 
 
 
@@ -357,10 +377,37 @@ $(CHIMERA) : $$(addsuffix .fasta,$$(basename $$(basename $$@))) $$(addsuffix .na
 
 
 
+LIST_FILES = $(subst fasta,an.list,$(CHIMERA_FASTA))
+$(LIST_FILES) : $$(subst an.list,fasta,$$@) $$(subst an.list,names,$$@)
+	$(eval F = $(word 1, $^))
+	$(eval N = $(word 2, $^))
+	$(eval S = $(basename $N))
+	mothur "#dist.seqs(fasta=$F, cutoff=0.15, processors=8);cluster(name=$N);"
+	rm $S.dist
+	rm $S.an.sabund
+	rm $S.an.rabund
+
+
+
+PERFECT_LIST = $(subst error.summary,perfect.an.list,$(PRECLUSTER_ERROR))
+$(PERFECT_LIST) : $$(subst perfect.an.list,error.summary,$$@) $$(subst perfect.an.list,fasta,$$@) $$(subst perfect.an.list,names,$$@)
+	$(eval E=$(word 1,$^))
+	$(eval F=$(word 2,$^))
+	$(eval N=$(word 3,$^))
+	$(eval S=$(basename $F))
+	grep "2$$" $E | cut -f 1 > $S.perfect.accnos
+	cp $F $S.perfect.fasta
+	cp $N $S.perfect.names
+	mothur "#remove.seqs(fasta=$S.perfect.fasta, name=$S.perfect.names, accnos=$S.perfect.accnos);dist.seqs(cutoff=0.15, processors=8);cluster(name=current)"
+	mv $S.perfect.pick.an.list $S.perfect.an.list
+	rm $S.perfect.pick.*abund
+	rm $S.perfect.pick.dist
+	rm $S.perfect.*names
+	rm $S.perfect.*fasta
+	rm $S.perfect.accnos
 
 #pipeline
-#	unique - seq.error
-#	pre.cluster - seq.error
-
-#	cluster w/ uchime
-#	cluster w/ seq.error
+#	rarefaction
+#	get sobs w/o sequencing error or chimeras
+#	classify sequences
+#	check randomness
