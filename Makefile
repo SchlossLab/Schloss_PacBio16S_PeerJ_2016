@@ -294,3 +294,21 @@ data/process/mock.quality.report : $(ERROR_QUALITY)
 
 
 
+
+
+
+REGIONS = V4 V1V3 V1V5 V1V6 V1V9 V3V5
+
+POOL_FASTA = $(sort $(subst mothur_june,mothur_pool,$(subst mothur_october,mothur_pool,$(SAMPLE_FASTA))))
+
+$(POOL_FASTA) : $(SAMPLE_FASTA)
+	$(eval F = $(notdir $@))
+	cat $(filter %$F, $(SAMPLE_FASTA)) > $@
+
+
+POOL_CCS_STATS = $(sort $(subst mothur_june,mothur_pool,$(subst mothur_october,mothur_pool,$(CCS_STATS))))
+$(POOL_CCS_STATS) : $(CCS_STATS)
+	$(eval F = $(notdir $@))
+	cat $(filter %$F, $(CCS_STATS)) > $@
+
+#---> Want to get SILVA seed reference, not nr?
