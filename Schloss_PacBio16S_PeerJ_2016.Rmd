@@ -33,10 +33,14 @@ inline_hook <- function(x){
 }
 knitr::knit_hooks$set(inline=inline_hook)
 
-regions <- c("v4", "v13", "v35", "v15", "v16", "v19")
+regions <- c("V1V3", "V1V5", "V1V6", "V1V9", "V3V5", "V4")
 clrs <- rainbow(length(regions))
-pretty.region <- c("v13"="V1-V3", "v15"="V1-V5", "v16"="V1-V6", "v19"="V1-V9", "v35"="V3-V5", "v4"="V4")
+pretty_region <- c("V1V3"="V1-V3", "V1V5"="V1-V5", "V1V6"="V1-V6", "V1V9"="V1-V9", "V3V5"="V3-V5", "V4"="V4")
 names(clrs) <- regions
+
+mock_error <- read.table(file="data/process/mock.error.report")
+mock_error_nochim <- mock_error[mock_error$numparents==1,]
+mock_error_good <- mock_error_nochim[mock_error_nochim$error <= 0.10,]
 ```
 
 \vspace{35mm}
@@ -264,354 +268,347 @@ markdown file are available as a public online repository
 ## Results and Discussion
 
 ```{r error_profile}
-sub.matrix <- read.table(file=paste("pipeline_dev/", regions[1], "/", regions[1], ".mock.filter.error.matrix", sep=""), header=T, row.names=1)[-7,]
-for(i in 2:length(regions)){
-	sub.matrix <- sub.matrix + read.table(file=paste("pipeline_dev/", regions[i], "/", regions[i], ".mock.filter.error.matrix", sep=""), header=T, row.names=1)[-7,]
-}
+mutations <- c("AA", "AT", "AG", "AC", "TA", "TT", "TG", "TC", "GA", "GT", "GG", "GC", "CA", "CT", "CG", "CC", "Ai", "Ti", "Gi", "Ci", "dA", "dT", "dG", "dC")
 
-matches <- c(sub.matrix[1,1], sub.matrix[2,2], sub.matrix[3,3], sub.matrix[4,4])
-total <- sum(sub.matrix)
-errors <- sub.matrix
-diag(errors[1:4,1:4]) <- 0
-init.error.rate <- 100 * sum(errors) / total				#1.925717
+mutation_table <- mock_error_good[, which(colnames(mock_error_good)%in%mutations)]
+mutation_count <- apply(mutation_table, 2, sum)
 
-subst.bias <- apply(errors[1:4,1:4], 2, sum)/apply(sub.matrix[1:4,1:4], 2, sum)
-subst.bias <- 100 * subst.bias/sum(subst.bias)
-#       rA        rT        rG        rC
-# 22.43918 27.21620 24.06557 26.27904
-#these are more or less equal to each other
+mutation_total <- sum(mutation_count)
+matches <- sum(mutation_count[c("AA", "TT", "GG", "CC")])
+mis_matches <- mutation_total - matches
+init_error_rate <- 100 * mis_matches / mutation_total		#0.6514488
 
-insert.bias <- (sub.matrix[,"rGap"]/apply(sub.matrix, 1, sum))[1:4]
-insert.bias <- 100 * insert.bias/sum(insert.bias)
-#       qA       qT       qG       qC
-# 23.46112 24.36667 24.33064 27.84157
-#these are more or less equal to each other
 
-delete.bias <- (sub.matrix["qGap",]/apply(sub.matrix, 2, sum))[1:4]
-delete.bias <- 100 * delete.bias/sum(delete.bias)
-#           rA      rT       rG       rC
-#qGap 11.43234 9.46907 44.57506 34.52353
-#interestingly the G's and C's are more likely to be deleted than the As or Ts
+#substitutions
+substitutions <- mutations[grep("[ATGC].", mutations)]
+substitutions <- substitutions[grep(".[ATGC]", substitutions)]
+substitutions <- substitutions[! substitutions %in% c("AA", "TT", "GG", "CC")]
+substitution_counts <- mutation_count[substitutions]
+substitution_total <- sum(substitution_counts)
+substitution_bias <- substitution_counts / substitution_total
 
-substitutions <- 100*sum(errors[1:4,1:4])/sum(errors)	#35.80084
-insertions <- 100*sum(errors[,5])/sum(errors)			#45.27368
-deletions <- 100*sum(errors[5,])/sum(errors)			#17.27259
-ambiguous <- 100*sum(errors[6,])/sum(errors)			#2.101505
+reference <- gsub(".(.)", "\\1", names(substitution_bias))
+# aggregate(substitution_bias, by=list(reference), mean)
+#
+# Group.1          x
+# 1       A 0.10192188
+# 2       C 0.05944286
+# 3       G 0.07434043
+# 4       T 0.09762816
+
+substitution_rate <- 100 * substitution_total / mis_matches
+
+# [1] 50.90346
+
+
+#deletions
+deletion_counts <- mutation_count[grep("d.", mutations)]
+deletion_total <- sum(deletion_counts)
+deletion_bias <- 100 * deletion_counts / deletion_total
+
+#dA        dT        dG        dC
+#24.25770 17.99132 39.44415 18.30683
+
+deletion_rate <- 100 * deletion_total / mis_matches
+
+#[1] 17.93361
+
+#insertions
+insertion_counts <- mutation_count[grep(".i", mutations)]
+insertion_total <- sum(insertion_counts)
+insertion_bias <- 100 * insertion_counts / insertion_total
+
+#Ai        Ti        Gi        Ci
+#23.13509 19.63951 30.05906 27.16633
+
+insertion_rate <- 100 * insertion_total / mis_matches
+
+#[1] 31.16293
+
 
 
 # Need to connect error types with the quality scores
-error.quality <- read.table(file=paste("pipeline_dev/", regions[1], "/", regions[1], ".mock.filter.error.quality", sep=""), header=T, row.names=1)[-7,]
-for(i in 2:length(regions)){
-	error.quality <- error.quality + read.table(file=paste("pipeline_dev/", regions[i], "/", regions[i], ".mock.filter.error.quality", sep=""), header=T, row.names=1)[-7,]
-}
-error.quality["72",] <- error.quality["72",] + error.quality["80",]
-error.quality <- error.quality[1:72,]
+error_quality <- read.table(file="data/process/mock.quality.report", header=T, row.names=1)
 
 #get quantiles
-matches <- rep(as.numeric(rownames(error.quality)), error.quality$matches)
+matches <- rep(as.numeric(rownames(error_quality)), error_quality$matches)
 m.quant <- quantile(matches, prob=c(0.025, 0.25, 0.5, 0.75, 0.975))
+m.94 <- 100 * sum(matches >= 94)/length(matches)
+# [1] 80.52649
 
-subs <- rep(as.numeric(rownames(error.quality)), error.quality$substitutions)
+subs <- rep(as.numeric(rownames(error_quality)), error_quality$substitutions)
 s.quant <- quantile(subs, prob=c(0.025, 0.25, 0.5, 0.75, 0.975))
+s.94 <- 100 * sum(subs >= 94)/length(subs)
+# [1] 79.96451
 
-ins <- rep(as.numeric(rownames(error.quality)), error.quality$insertions)
+ins <- rep(as.numeric(rownames(error_quality)), error_quality$insertions)
 i.quant <- quantile(ins, prob=c(0.025, 0.25, 0.5, 0.75, 0.975))
+i.94 <- 100 * sum(ins >= 94)/length(ins)
+# [1] 80.35283
 
-ambig <- rep(as.numeric(rownames(error.quality)), error.quality$ambiguous)
-a.quant <- quantile(ambig, prob=c(0.025, 0.25, 0.5, 0.75, 0.975))
+
+## Basic error correction analysis
+get_raw_error <- function(region){
+	region_data <- mock_error_good[mock_error_good$region == region,]
+	return(100*sum(region_data$mismatches)/sum(region_data$total))
+}
+
+raw_rates <- sapply(regions, get_raw_error)
+
+get_basic_kept <- function(region){
+	region_data <- mock_error_good[mock_error_good$region == region,]
+	100 * sum(region_data$good_coords & region_data$good_homop)/nrow(region_data)
+}
+
+basic_kept <- sapply(regions, get_basic_kept)
+
+get_basic_error <- function(region){
+	region_data <- mock_error_good[mock_error_good$region == region & mock_error_good$good_coords & mock_error_good$good_homop,]
+	return(100*sum(region_data$mismatches)/sum(region_data$total))
+}
+
+basic_rates <- sapply(regions, get_basic_error)
+
+mock_error_basic <- mock_error_good[mock_error_good$good_coords & mock_error_good$good_homop,]
+basic_n <- aggregate(mock_error_basic$error, by=list(mock_error_basic$region), length)$x
+names(basic_n) <- names(basic_rates)
+
+basic_error_rate <- 100 * sum(mock_error_basic$mismatches) / sum(mock_error_basic$total)		#[1] 0.6448736
 ```
-***The PacBio error profile.***
+
+***The PacBio error profile and a basic sequence curation procedure.***
 To build a sequence curation pipeline, we first needed to characterize the error
 rate associated with sequencing the 16S rRNA gene. We observed an average
-sequencing error rate of `r format(init.error.rate, digits=3, nsmall=2)`%. Insertions, deletions, substitutions, and ambiguous base calls
-accounted for `r format(insertions, digits=3, nsmall=1)`,
-`r format(deletions, digits=3, nsmall=1)`, `r format(substitutions, digits=3, nsmall=1)`,
-and `r format(ambiguous, digits=2, nsmall=1)`% of
-the errors, respectively. The substitution errors were equally likely and all four bases
+sequencing error rate of `r format(100*init_error_rate, digits=2, nsmall=2)`%. Insertions, deletions, and substitutions
+accounted for `r format(insertion_rate, digits=3, nsmall=1)`,
+`r format(deletion_rate, digits=3, nsmall=1)`, and `r format(substitution_rate, digits=3, nsmall=1)`% of the errors, respectively. The substitution errors were equally
+likely and all four bases
 were equally likely to cause insertion errors. Interestingly, guanines
-(`r format(delete.bias["rG"], digits=3, nsmall=1)`%) and cytosines
-(`r format(delete.bias["rC"], digits=3, nsmall=1)`%) were more likely to be deleted
-than adenines (`r format(delete.bias["rA"], digits=3, nsmall=1)`%) or thymidines
-(`r format(delete.bias["rT"], digits=2, nsmall=1)`%). When we considered the Phred
-quality score of each base call, we observed a median quality score of `r m.quant["50%"]`
-for correct base calls and scores of `r s.quant["50%"]` and `r i.quant["50%"]` for
-substitutions and insertions, respectively (Figure 1A). Although there
-was a broad distribution of quality scores with each type of base call, the errors could
-largely be distinguished from the correct base calls.
+(`r format(deletion_bias["dG"], digits=3, nsmall=1)`%) and adenines
+(`r format(deletion_bias["dA"], digits=3, nsmall=1)`%) were more likely to be deleted
+than cytosines (`r format(deletion_bias["dC"], digits=3, nsmall=1)`%) or thymidines
+(`r format(deletion_bias["dT"], digits=2, nsmall=1)`%). The PacBio quality values varied between
+`r paste(range(c(matches, subs, ins)), collapse=' and ')`. Surprisingly, the percentage of base calls that had the maximum quality value did not vary among correct base calls (`r format(m.94, digits=3, nsmall=1)`%), substitutions (`r format(s.94, digits=3, nsmall=1)`%), and insertions (`r format(i.94, digits=3, nsmall=1)`%). Although the individual base quality scores could not be used to screen sequence quality, we observed a strong correlation between our observed error rate and the predicted error rate as calculated by the PacBio software (Pearson's R: `r format(cor(mock_error_good$error, mock_error_good$pred_error), digits=2, nsmall=2)`; Figure 1A).
 
-
-```{r initialError}
-getInitError <- function(folder){
-	error <- read.table(file=paste("pipeline_dev/", folder, "/", folder, ".mock.filter.error.summary", sep=""), header=T, row.names=1)
-	error <- error[error$numparents==1,]
-	return(sum(error$mismatches)/sum(error$total))
-}
-
-init.rates <- unlist(lapply(regions, getInitError))
-names(init.rates) <- regions
-
-getReasonsLost <- function(region){
-	composite <- read.table(file=paste("pipeline_dev/", region, "/", region, ".composite", sep=""), header=T, row.names=1)
-	reasons <- as.character(composite$reason)
-
-	nseqs <- length(reasons)
-	good <- sum(reasons=="g")	/ nseqs
-	start.stop <- sum(grepl("s", reasons) | grepl("e", reasons)) / nseqs
-	homop <- length(grep("h", reasons)) / nseqs
-	ambig <- length(grep("n", reasons)) / nseqs
-	return(c(good=good, start.stop=start.stop, homop=homop, ambig=ambig, ngood=nseqs))
-}
-
-reasons.lost <- matrix(unlist(lapply(regions, getReasonsLost)), ncol=5, byrow=T)
-colnames(reasons.lost) <- c("good", "start.stop", "homop", "ambig", "nseqs")
-rownames(reasons.lost) <- regions
-
-orig.nseqs <- reasons.lost[,"nseqs"]
-basic.nseqs <- orig.nseqs * reasons.lost[,1]
-reasons.lost <- reasons.lost[,-5]
-
-getBasicError <- function(folder){
-	composite <- read.table(file=paste("pipeline_dev/", folder, "/", folder, ".composite", sep=""), header=T, row.names=1)
-	good <- composite[composite$reason == "g",]
-	return(sum(good$mismatches)/sum(good$total))
-}
-
-basic.error <- unlist(lapply(regions, getBasicError))
-names(basic.error) <- regions
-#         v4         v13         v35         v15         v16         v19
-#0.005373722 0.014743697 0.013730112 0.009027326 0.014249660 0.013027623
-composite.basic.error <- 100 * sum(basic.error*basic.nseqs)/(sum(basic.nseqs))
-```
-
-***A basic sequence curation procedure.***
-To establish a simple curation procedure, we culled any sequence that contained
-an ambiguous base call, had a string of the same base repeated 9 or more times,
-did not start and end at the expected alignment coordinates for that region
-of the 16S rRNA gene, or that was chimeric. This reduced the experiment-wide
-error rate from `r format(init.error.rate, digits=3, nsmall=2)` to
-`r format(composite.basic.error, digits=2, nsmall=2)`%. This basic procedure
+We established a simple curation procedure by culling any sequence that had a
+string of the same base repeated more than 8 times  or did not start and end at
+the expected alignment coordinates for that region of the 16S rRNA gene. This
+reduced the experiment-wide error rate from `r format(init_error_rate, digits=3, nsmall=2)` to
+`r format(basic_error_rate, digits=2, nsmall=2)`%. This basic procedure
 resulted in the removal of between
-`r format(round(min(100*(1-reasons.lost[,"good"])), digits=1), nsmall=1)`
-(`r pretty.region[names(which.min(100*(1-reasons.lost[,"good"])))]`) and
-`r round(max(100*(1-reasons.lost[,"good"])), digits=1)`
-(`r pretty.region[names(which.max(100*(1-reasons.lost[,"good"])))]`)% of the
-reads. The percentage of reads removed increased with the length of the
-fragment (Figure 2). The number of reads removed
-because of the presence of ambiguous base calls was similar to the number of
-reads that were removed for not fully aligning to the correct region within the
-16S rRNA gene (Table 2). The latter class of errors was
-generally due to sequence truncations that could not be explained.  
+`r format(min(100-basic_kept), digits=3, nsmall=1)`
+(`r pretty_region[names(which.min(100-basic_kept))]`) and
+`r format(max(100-basic_kept), digits=3, nsmall=1)`
+(`r pretty_region[names(which.max(100-basic_kept))]`)% of the reads (Table 2). Although
+the percentage of reads removed increased with the length of the fragment, there
+was no obvious relationship between fragment length and error rate (Figure 2).
 
 
-```{r barcodePrimerAnalysis}
-getFragment_BPErrorRates <- function(folder){
-	composite <- read.table(file=paste("pipeline_dev/", folder, "/", folder, ".composite", sep=""), header=T, row.names=1)
-	composite <- composite[composite$reason == "g",]
-	bc.primer <- composite$fbdiffs + composite$rbdiffs + composite$fpdiffs + composite$rpdiffs
+```{r barcode_primer_analysis}
+mock_error_basic$pbdiffs <- mock_error_basic$fbdiffs + mock_error_basic$rbdiffs + mock_error_basic$fpdiffs + mock_error_basic$rpdiffs
 
-	return(cbind(composite$error, bc.primer))
+#This is for the Figure 2B plot...
+pb_overall <- aggregate(mock_error_basic$error, by=list(mock_error_basic$pbdiffs), function(x){c(mean=mean(100*x))})
+
+
+# want to get the error rate and fraction of sequences for each region with a
+# threshold of mismatches or fewer
+
+pb_by_region_mm <- aggregate(mock_error_basic$error, by=list(mock_error_basic$pbdiffs, mock_error_basic$region), function(x){c(mean=mean(100*x), nseqs=length(x))})
+
+aggregate_pb_data <- function(region){
+	pb_region <- pb_by_region_mm[pb_by_region_mm$Group.2 == region,]
+
+	product <- pb_region$x[,"mean"] * pb_region$x[,"nseqs"]
+	pb_region_nseqs <- cumsum(pb_region$x[,"nseqs"])
+	pb_region_error <- cumsum(product) / pb_region_nseqs
+	pb_region_frac <- pb_region_nseqs / sum(pb_region$x[,"nseqs"])
+	c(error=pb_region_error, fraction=pb_region_frac)
 }
 
-errors <- lapply(regions, getFragment_BPErrorRates)
+pb_data <- sapply(regions, aggregate_pb_data)
 
-errors.table <- matrix(errors[[1]], ncol=2, byrow=F)
-err.bcprimer <- aggregate(100*errors.table[,1], by=list(errors.table[,2]),
-													function(x){c(mean(x), length(x))})
+pb_error <- pb_data[grep("error", rownames(pb_data)),]
+rownames(pb_error) <- 0:6
 
-getBCPrimerError <- function(folder){
-	composite <- read.table(file=paste("pipeline_dev/", folder, "/", folder,
-																		 ".composite", sep=""), header=T, row.names=1)
-	composite <- composite[composite$reason == "g",]
-	mismatch <- composite$fbdiffs + composite$rbdiffs + composite$fpdiffs + composite$rpdiffs
+pb_fraction <- pb_data[grep("fraction", rownames(pb_data)),]
+rownames(pb_fraction) <- 0:6
 
-	good0 <- mismatch == 0
-	composite.good0 <- composite[good0,]
+pb_error_reduction_0 <- 100 * (1 - pb_error["0",]/basic_rates)
+pb_error_reduction_1 <- 100 * (1 - pb_error["1",]/basic_rates)
 
-	good1 <- mismatch <= 1
-	composite.good1 <- composite[good1,]
-
-	return(c(mean(composite.good0[,"error"]), nrow(composite.good0)/nrow(composite),
-	mean(composite.good1[,"error"]), nrow(composite.good1)/nrow(composite) ))
-}
-
-bcprimer.error <- matrix(unlist(lapply(regions, getBCPrimerError)), nrow=6, byrow=T)
-rownames(bcprimer.error) <- regions
-colnames(bcprimer.error) <- c("0.error", "0.frac", "1.error", "1.frac")
-
-#         0.error    0.frac     1.error    1.frac
-# v4  0.002616919 0.6417469 0.003711755 0.9081720
-# v13 0.011102712 0.5799452 0.012493713 0.8675194
-# v35 0.010838504 0.6464069 0.011901910 0.8934573
-# v15 0.005375053 0.5079055 0.007029568 0.8338150
-# v16 0.010374438 0.5456238 0.011893323 0.8609559
-# v19 0.008543379 0.5072207 0.010086351 0.8237548
+pb_nseqs_reduction_0 <- 100 * (1 - pb_fraction["0",])
+pb_nseqs_reduction_1 <- 100 * (1 - pb_fraction["1",])
 ```
-```{r coverageAnalysis}
-errorAtCoverageCutoff <- function(folder){
-	composite <- read.table(file=paste("pipeline_dev/", folder, "/", folder, ".composite", sep=""), header=T, row.names=1)
-	composite <- composite[composite$reason == "g",]
 
-	total.seqs <- nrow(composite)
 
-	deep <- composite$freq >= 10
-	composite <- composite[deep,]
+```{r coverage_analysis}
+#This is for the Figure 2C plot...
+coverage_overall_agg <- aggregate(100 * mock_error_basic$error, by=list(mock_error_basic$coverage), mean)
+coverage_overall <- coverage_overall_agg$x
+names(coverage_overall) <- coverage_overall_agg$Group.1
+coverage_overall <- coverage_overall[as.character(3:40)]
 
-	covered.seqs <- nrow(composite)
 
-	error <- sum(composite$mismatches)/sum(composite$total)
-	frac.kept <- covered.seqs / total.seqs
-	return(c(error=error, kept=frac.kept))
+# need to get the error rate for coverage values between 3 and 40 for each region
+
+error_by_coverage <- function(region){
+	coverage_region <- mock_error_basic[mock_error_basic$region == region,]
+	coverage_error_agg <- aggregate(100 * coverage_region$error, by=list(coverage_region$coverage), mean)
+	coverage_error <- coverage_error_agg[coverage_error_agg$Group.1 <= 40,"x"]
+	names(coverage_error) <- coverage_error_agg[coverage_error_agg$Group.1 <= 40,"Group.1"]
+	coverage_error
 }
 
-coverage.error <- unlist(lapply(regions, errorAtCoverageCutoff))
-coverage.error <- matrix(coverage.error, ncol=2, byrow=T)
-rownames(coverage.error) <- regions
-colnames(coverage.error) <- c("10.error", "10.frac")
-
-#       10.error   10.frac
-#v4  0.002524566 0.7897874
-#v13 0.010359113 0.6592051
-#v35 0.010084961 0.6642832
-#v15 0.006534609 0.6717103
-#v16 0.010039601 0.4605835
-#v19 0.009506114 0.5620395
+coverage_error <- sapply(regions, error_by_coverage)
+#seems to plateau right around 10
 
 
-coverage.reduction <- (1-coverage.error[,"10.error"]/basic.error)*100
-#      v4      v13      v35      v15      v16      v19
-#53.02015 29.73870 26.54859 27.61302 29.54498 27.03110
-```
-```{r qualityScoreAnalysis}
-getErrorRateFromAveQ <- function(folder, threshold=60){
-	write(folder, "")
-	composite <- read.table(file=paste("pipeline_dev/", folder, "/", folder, ".composite", sep=""), header=T, row.names=1)
-	composite <- composite[composite$reason == "g",]
+error_at_below_coverage_cutoff <- function(region, cutoff=10){
+	region_data <- mock_error_basic[mock_error_basic$region == region,]
 
-	rates <- composite[composite$aveQ >= threshold,]
+	deep <- region_data$coverage >= 10
+	coverage_data <- region_data[deep,]
 
-	remaining.error <- mean(rates[,"error"])
-	fraction.kept <- nrow(rates)/nrow(composite)
-
-	return(c(remaining.error, fraction.kept))
+	error <- 100 * sum(coverage_data$mismatches)/sum(coverage_data$total)
+	frac_kept <- nrow(coverage_data) / nrow(region_data)
+	c(error=error, fraction=frac_kept)
 }
 
-aveq.error <- matrix(unlist(lapply(regions, getErrorRateFromAveQ)), ncol=2, byrow=T)
-rownames(aveq.error) <- regions
-colnames(aveq.error) <- c("60.error", "60.frac")
+coverage_data <- sapply(regions, error_at_below_coverage_cutoff)
 
-#       60.error   60.frac
-#v4  0.002623098 0.8692667
-#v13 0.009914371 0.7608497
-#v35 0.009035060 0.7697533
-#v15 0.004553350 0.7005270
-#v16 0.008921902 0.6561142
-#v19 0.005714256 0.5010315
+coverage_error <- coverage_data["error",]
+coverage_fraction <- coverage_data["fraction",]
 
-quality.reduction <- (1-aveq.error[,"60.error"]/basic.error)*100
+coverage_error_reduction <- 100 * (1 - coverage_error/basic_rates)
+coverage_nseqs_reduction <- 100 * (1 - coverage_fraction)
 ```
-```{r oligosCoverageAnalysis}
-oligosCoverage <- function(folder){
-	write(folder, "")
-	composite <- read.table(file=paste("pipeline_dev/", folder, "/", folder, ".composite", sep=""), header=T, row.names=1)
-	composite <- composite[composite$reason == "g",]
 
-	mismatch <- composite$fbdiffs + composite$rbdiffs + composite$fpdiffs + composite$rpdiffs
-	good0 <- mismatch == 0 & composite$freq >= 10
-	composite.good0 <- composite[good0,]
 
-	good1 <- mismatch <= 1 & composite$freq >= 10
-	composite.good1 <- composite[good1,]
+```{r predicted_error_analysis }
+#This is for the Figure 2D plot...
+pred_overall <- aggregate(100 * mock_error_basic$error, by=list(round(mock_error_basic$pred_error, 3)), mean)
 
-	return(c(mean(composite.good0[,"error"]), nrow(composite.good0)/nrow(composite),
-	mean(composite.good1[,"error"]), nrow(composite.good1)/nrow(composite) ))
+error_at_above_pred_error_cutoff <- function(region, threshold=0.999){
+	region_data <- mock_error_basic[mock_error_basic$region == region,]
+
+	above_threshold <- region_data[region_data$pred_error >= threshold,]
+
+	c(error=100*sum(above_threshold$mismatches)/sum(above_threshold$total), nseqs=nrow(above_threshold)/nrow(region_data))
 }
 
-oligosCoverage.error <- matrix(unlist(lapply(regions, oligosCoverage)), ncol=4, byrow=T)
-rownames(oligosCoverage.error) <- regions
-colnames(oligosCoverage.error) <- c("0.10.error", "0.10.frac", "1.10.error", "1.10.frac")
+pred_error_data <- sapply(regions, error_at_above_pred_error_cutoff, threshold=0.999)
 
-#     0.10.error 0.10.frac  1.10.error 1.10.frac
-#v4  0.001565052 0.5567846 0.002068184 0.7513111
-#v13 0.009371691 0.4353586 0.009899256 0.6180905
-#v35 0.009096211 0.4907043 0.009503092 0.6321058
-#v15 0.004050098 0.3803978 0.005253236 0.5899354
-#v16 0.007945951 0.2960894 0.008956478 0.4301676
-#v19 0.006706336 0.3188918 0.007903900 0.4927793
+pred_error_reduction <- 100 * (1 - pred_error_data["error",]/basic_rates)
+pred_nseqs_reduction <- 100 * (1 - pred_error_data["nseqs",])
 ```
+
+
+
+```{r oligos_coverage_analysis}
+get_oligos_coverage <- function(region){
+	region_data <- mock_error_basic[mock_error_basic$region == region,]
+
+	good0 <- region_data$pbdiffs <= 0 & region_data$coverage >= 10
+	region_data_good0 <- region_data[good0,]
+
+	good1 <- region_data$pbdiffs <= 1 & region_data$coverage >= 10
+	region_data_good1 <- region_data[good1,]
+
+	c(	100*mean(region_data_good0[,"error"]), nrow(region_data_good0)/nrow(region_data),
+		100*mean(region_data_good1[,"error"]), nrow(region_data_good1)/nrow(region_data))
+}
+
+oligos_coverage_error <- matrix(unlist(lapply(regions, get_oligos_coverage)), ncol=4, byrow=T)
+rownames(oligos_coverage_error) <- regions
+colnames(oligos_coverage_error) <- c("0.10.error", "0.10.frac", "1.10.error", "1.10.frac")
+
+#     0.10.error 0.10.frac 1.10.error 1.10.frac
+#V1V3  0.4515344 0.5898447  0.4632910 0.7968639
+#V1V5  0.4187311 0.5557715  0.4270938 0.7384810
+#V1V6  0.4399351 0.5410259  0.4460726 0.7167325
+#V1V9  0.4317629 0.4444776  0.4420337 0.5752849
+#V3V5  0.6421004 0.6854427  0.6555240 0.8102832
+#V4    0.6825316 0.5512332  0.7023460 0.8245533
+
+oligos_coverage_error_reduction <- 100 * (1 - oligos_coverage_error[,"1.10.error"]/basic_rates)
+oligos_coverage_nseqs_reduction <- 100 * (1 - oligos_coverage_error[,"1.10.frac"])
+```
+
+
 ```{r oligosQScoreAnalysis}
-oligosQScore <- function(folder){
-	write(folder, "")
-	composite <- read.table(file=paste("pipeline_dev/", folder, "/", folder, ".composite", sep=""), header=T, row.names=1)
-	composite <- composite[composite$reason == "g",]
+get_oligos_pred_error <- function(region){
+	region_data <- mock_error_basic[mock_error_basic$region == region,]
 
-	mismatch <- composite$fbdiffs + composite$rbdiffs + composite$fpdiffs + composite$rpdiffs
+	good0 <- region_data$pbdiffs <= 0 & region_data$pred_error >= 0.999
+	region_data_good0 <- region_data[good0,]
 
-	good <- mismatch == 0 & composite$aveQ >= 60
-	composite.good0 <- composite[good,]
+	good1 <- region_data$pbdiffs <= 1 & region_data$pred_error >= 0.999
+	region_data_good1 <- region_data[good1,]
 
-	good1 <- mismatch <= 1 & composite$aveQ >= 60
-	composite.good1 <- composite[good1,]
-
-	return(c(mean(composite.good0[,"error"]), nrow(composite.good0)/nrow(composite),
-	mean(composite.good1[,"error"]), nrow(composite.good1)/nrow(composite) ))
+	c(	100 * mean(region_data_good0[,"error"]), nrow(region_data_good0)/nrow(region_data),
+		100 * mean(region_data_good0[,"error"]), nrow(region_data_good0)/nrow(region_data) )
 }
 
-oligosQScore.error <- matrix(unlist(lapply(regions, oligosQScore)), ncol=4, byrow=T)
-rownames(oligosQScore.error) <- regions
-colnames(oligosQScore.error) <- c("0.60.error", "0.60.frac", "1.60.error", "1.60.frac")
+oligos_pred_error <- matrix(unlist(lapply(regions, get_oligos_pred_error)), ncol=4, byrow=T)
+rownames(oligos_pred_error) <- regions
+colnames(oligos_pred_error) <- c("0.999.error", "0.999.frac", "1.999.error", "1.999.frac")
 
-#     0.60.error 0.60.frac  1.60.error 1.60.frac
-#v4  0.001715135 0.6015066 0.002215499 0.8232097
-#v13 0.009153895 0.5013705 0.009700915 0.7108269
-#v35 0.008365403 0.5557740 0.008690839 0.7281015
-#v15 0.003217812 0.4102346 0.003993206 0.6282727
-#v16 0.007589961 0.4115456 0.008358922 0.6101800
-#v19 0.004870705 0.3209549 0.005294429 0.4653699
+#     0.999.error 0.999.frac 1.999.error 1.999.frac
+#V1V3   0.2806049  0.4749822   0.2806049  0.4749822
+#V1V5   0.2177965  0.4266279   0.2177965  0.4266279
+#V1V6   0.2168503  0.4296550   0.2168503  0.4296550
+#V1V9   0.2177073  0.3438720   0.2177073  0.3438720
+#V3V5   0.2229757  0.5131411   0.2229757  0.5131411
+#V4     0.3485654  0.3961328   0.3485654  0.3961328
+
+oligos_pred_error_reduction <- 100 * (1 - oligos_pred_error[,"1.999.error"]/basic_rates)
+oligos_pred_nseqs_reduction <- 100 * (1 - oligos_pred_error[,"1.999.frac"])
 ```
-```{r coverageQScoreAnalysis}
-coverageQScore <- function(folder){
-	write(folder, "")
-		composite <- read.table(file=paste("pipeline_dev/", folder, "/", folder, ".composite", sep=""), header=T, row.names=1)
-		composite <- composite[composite$reason == "g",]
 
-	good <- composite$freq >= 10 & composite$aveQ>= 60
-	composite.good <- composite[good,]
+```{r coverage_pred_error_analysis}
+get_coverage_pred <- function(region){
+	region_data <- mock_error_basic[mock_error_basic$region == region,]
 
-	return(c(mean(composite.good[,"error"]), nrow(composite.good)/nrow(composite) ))
+	good <- region_data$coverage >= 10 & region_data$pred_error >= 0.999
+	region_data_good <- region_data[good,]
+
+	c(100 * mean(region_data_good[,"error"]), nrow(region_data_good)/nrow(region_data) )
 }
 
-coverageQScore.error <- matrix(unlist(lapply(regions, coverageQScore)), ncol=2, byrow=T)
-rownames(coverageQScore.error) <- regions
-colnames(coverageQScore.error) <- c("10.60.error", "10.60.frac")
+coverage_pred_error <- matrix(unlist(lapply(regions, get_coverage_pred)), ncol=2, byrow=T)
+rownames(coverage_pred_error) <- regions
+colnames(coverage_pred_error) <- c("10.999.error", "10.999.frac")
 
-#    10.60.error 10.60.frac
-#v4  0.002361882  0.7874988
-#v13 0.010016818  0.6541800
-#v35 0.009296289  0.6564176
-#v15 0.004481083  0.5824549
-#v16 0.009612120  0.4587213
-#v19 0.005692918  0.3884468
+#    10.999.error 10.999.frac
+#V1V3   0.2843963    65.86436
+#V1V5   0.2188792    56.55108
+#V1V6   0.2178326    57.33756
+#V1V9   0.2191284    42.66675
+#V3V5   0.2236951    60.74254
+#V4     0.3527900    61.79213
+
+coverage_pred_error_reduction <- 100 * (1 - coverage_pred_error[,"10.999.error"]/basic_rates)
+coverage_pred_nseqs_reduction <- 100 * (1 - coverage_pred_error[,"10.999.frac"])
 ```
-```{r allFiltersAnalysis}
-allFilters <- function(folder){
-write(folder, "")
-		composite <- read.table(file=paste("pipeline_dev/", folder, "/", folder, ".composite", sep=""), header=T, row.names=1)
-		composite <- composite[composite$reason == "g",]
-	mismatch <- composite$fbdiffs + composite$rbdiffs + composite$fpdiffs + composite$rpdiffs
 
-good0 <- mismatch == 0 & composite$aveQ>= 60 & composite$freq >= 10
-composite.good0 <- composite[good0,]
+```{r all_filters_analysis}
+get_all_filters <- function(region){
+	region_data <- mock_error_basic[mock_error_basic$region == region,]
 
-good1 <- mismatch <= 1 & composite$aveQ >= 60 & composite$freq >= 10
-composite.good1 <- composite[good1,]
+	good0 <- region_data$pbdiffs == 0 & region_data$pred_error >= 0.999 & region_data$coverage >= 10
+	region_data_good0 <- region_data[good0,]
 
-return(c(mean(composite.good0[,"error"]), nrow(composite.good0)/nrow(composite),
-mean(composite.good1[,"error"]), nrow(composite.good1)/nrow(composite) ))
+	good1 <- region_data$pbdiffs <= 1 & region_data$pred_error >= 0.999 & region_data$coverage >= 10
+	region_data_good1 <- region_data[good1,]
+
+	c(	100 * mean(region_data_good0[,"error"]), nrow(region_data_good0)/nrow(region_data),
+		100 * mean(region_data_good1[,"error"]), nrow(region_data_good1)/nrow(region_data) )
 }
 
-allFilters.error <- matrix(unlist(lapply(regions, allFilters)), ncol=4, byrow=T)
-rownames(allFilters.error) <- regions
-colnames(allFilters.error) <- c("0.10.60.error", "0.10.60.frac", "1.10.60.error", "1.10.60.frac")
+all_filters_error <- matrix(unlist(lapply(regions, get_all_filters)), ncol=4, byrow=T)
+rownames(all_filters_error) <- regions
+colnames(all_filters_error) <- c("0.10.999.error", "0.10.999.frac", "1.10.999.error", "1.10.999.frac")
 
 #    0.10.60.error 0.10.60.frac 1.10.60.error 1.10.60.frac
 #v4    0.001515500    0.5562125   0.001993325    0.7499762
@@ -620,6 +617,38 @@ colnames(allFilters.error) <- c("0.10.60.error", "0.10.60.frac", "1.10.60.error"
 #v15   0.003078476    0.3488609   0.003905562    0.5268616
 #v16   0.007738039    0.2954687   0.008814923    0.4295469
 #v19   0.004797594    0.2496316   0.005266467    0.3631005
+
+#     0.10.999.error 0.10.999.frac 1.10.999.error 1.10.999.frac
+#V1V3      0.2808218     0.4696170      0.2840387     0.6183602
+#V1V5      0.2184805     0.4192252      0.2182989     0.5374066
+#V1V6      0.2170989     0.4182253      0.2174090     0.5421862
+#V1V9      0.2176989     0.3213802      0.2191334     0.4016057
+#V3V5      0.2241187     0.5038275      0.2240779     0.5841414
+#V4        0.3492870     0.3932393      0.3526755     0.5665274
+
+all_filters_error_reduction <- 100 * (1 - all_filters_error[,"1.10.999.error"]/basic_rates)
+all_filters_nseqs_reduction <- 100 * (1 - all_filters_error[,"1.10.999.frac"])
+```
+
+
+```{r summary}
+base_error_reduction <- rbind(	pb_error_reduction_0,
+								pb_error_reduction_1,
+								pred_error_reduction,
+								coverage_error_reduction,
+								coverage_pred_error_reduction,
+								oligos_coverage_error_reduction,
+								oligos_pred_error_reduction,
+								all_filters_error_reduction)
+
+base_nseqs_reduction <- rbind(	pb_nseqs_reduction_0,
+								pb_nseqs_reduction_1,
+								pred_nseqs_reduction,
+								coverage_nseqs_reduction,
+								coverage_pred_nseqs_reduction,
+								oligos_coverage_nseqs_reduction,
+								oligos_pred_nseqs_reduction,
+								all_filters_nseqs_reduction)
 ```
 
 ***Identifying correlates of increased sequencing error.***
@@ -634,49 +663,34 @@ be correlated with the error rate for the entire sequence. We observed a strong
 relationship between the number of mismatches to the barcodes and primers and the
 error rate of the rest of the sequence fragment (Figure 1B). Although
 allowing no mismatches to the barcodes and primers yielded the lowest error rate,
-that stringent criterion removed a large fraction of the reads from the dataset and
-allowing at most one mismatch marginally increased the error rate while preserving
-more sequences in the dataset (Figure 2). Second, we hypothesized
-that increased sequencing coverage should yield lower error rates. We found that
-once we had obtained 10-fold coverage of the fragments, the error rate did not
-change appreciably (Figure 1C). When we compared the error
-rates of reads with at least 10-fold coverage to those with less coverage, we
-reduced the error rate by
-`r paste(round(sort(coverage.reduction)[c(1,5)], digits=1), collapse=" to ")`%
-for each region except the V4 region for which the error rate was reduced by
-`r round(coverage.reduction["v4"], digits=1)`%. Third, based on the earlier
-analysis associating errors with quality scores, we used two quality score-based
-approaches for identifying reads with errors (Figure 3). We calculated the
-minimum average quality score across all 50-nt windows within each sequence and
-we also calculated the average quality score across each sequence. We then
-associated both methods of calculating the average quality score with the error
-rate of the reads and the fraction of sequences that would be retained if each
-threshold were selected. Using the sliding window approach we did not observe
-any clear break points indicating that one quality score would be better than
-another (Figure 3AB). In contrast, using the whole sequence quality score
-average we observed a decrease in the error rate and the fraction of sequences
-retained when the threshold was increased above 60 (Figure 3CD). When we used
-this threshold, we were able to reduce the error rate by
-`r paste(round(range(quality.reduction), digits=1), collapse=" to ")`%
-(Figure 2A). We noted that the fraction of reads retained
-decreased as the length of the fragment increased with retention of
-`r round(100*aveq.error["v4", "60.frac"],digits=1)`% of the V4 reads and
-`r round(100*aveq.error["v19", "60.frac"],digits=1)`% of the V1-V9 reads (Figure
-2B). Next, we asked whether which combinations of culling reads with mismatches
-to the expected barcodes and primers, less than 10-fold sequencing coverage, and
-an average quality score less than 60 made the most meaningful reductions in the
-error rate while preserving the most reads when implemented with the basic
-curation pipeline (Figure 2B). We observed similar error rates when we required
-one or fewer mismatches to the barcodes and primers and an average quality score
-above 60 as when we also required a minimum 10-fold coverage. Culling sequences
-that had more than one mismatch to the barcodes and primers and those with an
-average quality score less than 60 reduced the error rate to between
-`r paste(round(100*range(oligosQScore.error[,"1.60.error"]), digits=2), collapse=" and ")`.
-This procedure resulted in the removal of
-`r paste(rev(round(100*(1-range(oligosQScore.error[,"1.60.frac"])), digits=0)), collapse=" and ")`%
-of the reads (Figure 2). The remainder of this paper uses this sequence curation
-approach.
-
+that stringent criterion removed a large fraction of the reads from the dataset.
+Allowing at most one mismatch only marginally increased the error rate while
+retaining more sequences in the dataset (Figure 2). Second, we hypothesized that
+increased sequencing coverage should yield lower error rates. We found that once
+we had obtained 10-fold coverage of the fragments, the error rate did not change
+appreciably (Figure 1C). When we compared the error rates of reads with at least
+10-fold coverage to those with less coverage, we reduced the error rate by
+`r paste(format(range(coverage_reduction), digits=3, nsmall=1), collapse=" to ")`%
+(Figure 2). Third, based on the observed correlation between the
+predicted and observed error rates, we sought to identify a minimum predicted
+error rate that would allow us to reduce the observed error rate. The average
+observed error rate for sequences with predicted error rates between 0.01 and
+0.10% was linear (Figure 1D). We decided to use a threshold of 0.01% because a
+large number of sequence reads were lost when we used a smaller threshold. When
+we used this threshold, we were able to reduce the error rate by
+`r paste(format(range(pred_error_reduction), digits=3, nsmall=1), collapse=" to ")`%
+(Figure 2A). Finally, we quantified the effect of combining filters. We found that
+any combination of filters that included the predicted error rate threshold had
+the most significant impact on reducing the observed error rate. Furthermore,
+the inclusion of the mismatch and coverage filters had a negligible impact on
+error rates, but had a significant impact on the number of sequences included in
+the analysis. For instance, among the V1-V9 data, requiring sequences to have a
+predicted error rate less than 0.01% resulted in a `r format(base_error_reduction["pred_error_reduction","V1V9"], digits=3, nsmall=1)`% and resulted in the removal of `r format(base_nseqs_reduction["pred_error_reduction","V1V9"], digits=3, nsmall=1)`% of the sequences. Adding the mismatch or coverage filter
+had no effect on the reduction of error, but resulted in the removal of
+`r format(base_nseqs_reduction["oligos_pred_nseqs_reduction","V1V9"], digits=3, nsmall=1)` and
+`r format(base_nseqs_reduction["coverage_pred_nseqs_reduction","V1V9"], digits=3, nsmall=1)`% of the sequences, respectively. Use of all filters had no impact on the reduction in the observed
+error rate, but resulted in the removal of `r format(base_nseqs_reduction["all_filters_nseqs_reduction","V1V9"], digits=3, nsmall=1)`% of the sequences. The remainder of this paper only uses sequences
+with a predicted error rate less than 0.01%.
 
 ```{r precluster}
 summarizeError <- function(folder, method){
@@ -1084,6 +1098,7 @@ knitr::kable(reasons.lost, digits=1, row.names=TRUE,
 
 ## Figures
 
+[revise - Fig 1A plot predicted error rate vs observed error rate]
 **Figure 1. Summary of errors in data generated using PacBio sequencing platform
 to sequence various regions within the 16S rRNA gene.** Quality scores varied
 with error types (A). The sequencing error rate of the amplified gene fragments
@@ -1100,12 +1115,13 @@ represent the region that was sequenced. For example "15" represents the data
 for the V1-V5 region.
 
 
+[ This figure removed ]
 **Figure 3. The relationship between the error rate of each region and the
 composite quality scores for the sequences.** The error rates (A and C) and
 percentage of sequences (B and D) were calculated for the reads that had a
 composite quality score above the plotted value. The composite quality scores
 were calculated by either determining the minimum value of the average quality
-score wihin all 50-nt windows within each region (A and B) or by calculating
+score within all 50-nt windows within each region (A and B) or by calculating
 the average quality score across the entire sequence read (C and D).
 
 
