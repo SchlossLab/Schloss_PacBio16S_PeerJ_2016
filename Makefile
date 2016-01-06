@@ -406,8 +406,22 @@ $(PERFECT_LIST) : $$(subst perfect.an.list,error.summary,$$@) $$(subst perfect.a
 	rm $S.perfect.*fasta
 	rm $S.perfect.accnos
 
+
+
+UCHIME_SOBS = $(subst list,ave-std.summary,$(LIST_FILES))
+$(UCHIME_SOBS) : $$(subst ave-std.summary,list,$$@)
+	mothur "#summary.single(list=$^, label=0.03, subsample=1000,calc=nseqs-sobs-coverage)"
+	rm $(subst ave-std.,,$^)
+
+
+
+NOCHIM_SOBS = $(subst list,ave-std.summary,$(PERFECT_LIST))
+$(NOCHIM_SOBS) : $$(subst ave-std.summary,list,$$@)
+	mothur "#summary.single(list=$^, label=0.03, subsample=1000,calc=nseqs-sobs-coverage)"
+	rm $(subst ave-std.,,$@)
+
+
+
 #pipeline
-#	rarefaction
 #	get sobs w/o sequencing error or chimeras
 #	classify sequences
-#	check randomness
