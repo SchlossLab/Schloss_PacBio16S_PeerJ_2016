@@ -22,3 +22,5 @@ head.batch
 tail.batch
 
 qscore_fiasco/
+
+.nfs*
