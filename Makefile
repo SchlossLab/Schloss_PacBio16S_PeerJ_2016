@@ -36,7 +36,7 @@ $(REFS)/silva.seed.align :
 	tar xvzf Silva.seed_v123.tgz silva.seed_v123.align silva.seed_v123.tax
 	mothur "#get.lineage(fasta=silva.seed_v123.align, taxonomy=silva.seed_v123.tax, taxon=Bacteria);degap.seqs(fasta=silva.seed_v123.pick.align, processors=8)"
 	mv silva.seed_v123.pick.align $(REFS)/silva.seed.align
-	rm Silva.seed_v123.tgz mothur*logfile silva.seed_v123.*
+	rm Silva.seed_v123.tgz silva.seed_v123.*
 
 
 $(REFS)/silva.nr.% :
@@ -45,7 +45,7 @@ $(REFS)/silva.nr.% :
 	mothur "#get.lineage(fasta=silva.nr_v123.align, taxonomy=silva.nr_v123.tax, taxon=Bacteria);degap.seqs(fasta=silva.nr_v123.pick.align, processors=8)"
 	mv silva.nr_v123.pick.tax $(REFS)/silva.nr.tax
 	mv silva.nr_v123.pick.ng.fasta $(REFS)/silva.nr.fasta
-	rm Silva.nr_v123.tgz mothur*logfile silva.nr_v123.*
+	rm Silva.nr_v123.tgz silva.nr_v123.*
 
 
 # We also want the greengenes reference taxonomy. This version is from the
@@ -422,6 +422,40 @@ $(NOCHIM_SOBS) : $$(subst ave-std.summary,list,$$@)
 
 
 
+
+MOCK_REGION = $(foreach R,$(REGIONS),data/mothur_pool/HMP_MOCK.$R.align)
+$(MOCK_REGION) : $(REFS)/HMP_MOCK.align code/get_mock_region.sh
+	$(eval REGION = $(subst .,,$(suffix $(basename $@))))
+	bash code/get_mock_region.sh $(REGION)
+
+
+NOERROR_SOBS = $(foreach R,$(REGIONS),data/mothur_pool/HMP_MOCK.$R.pick.phylip.an.summary)
+data/mothur_pool/HMP_MOCK.%.pick.phylip.an.summary : data/mothur_pool/%.mock.screen.unique.good.filter.unique.precluster.error.summary data/mothur_pool/HMP_MOCK.%.align
+	$(eval E = $(word 1, $^))
+	grep "1$$" $E | cut -f 2 | sort | uniq > data/mothur_pool/$*.mock.screen.unique.good.filter.unique.precluster.ref.accnos
+	mothur "#get.seqs(fasta=data/mothur_pool/HMP_MOCK.$*.align, accnos=data/mothur_pool/$*.mock.screen.unique.good.filter.unique.precluster.ref.accnos);dist.seqs(cutoff=0.15, output=lt); cluster(phylip=current); summary.single(label=0.03, calc=sobs)"
+	rm data/mothur_pool/HMP_MOCK.$*.pick.phylip.an.sabund
+	rm data/mothur_pool/HMP_MOCK.$*.pick.phylip.an.rabund
+	rm data/mothur_pool/HMP_MOCK.$*.pick.phylip.an.list
+	rm data/mothur_pool/HMP_MOCK.$*.pick.phylip.dist
+	rm data/mothur_pool/HMP_MOCK.$*.pick.align
+	rm data/mothur_pool/$*.mock.screen.unique.good.filter.unique.precluster.ref.accnos
+
+
+
+RDP=$(foreach R,$(REGIONS),data/mothur_pool/HMP_MOCK.$R.pds.wang.taxonomy)
+data/mothur_pool/HMP_MOCK.%.pds.wang.taxonomy : data/mothur_pool/HMP_MOCK.%.align data/references/trainset10_082014.pds.fasta data/references/trainset10_082014.pds.tax
+	mothur "#classify.seqs(fasta=$<,reference=data/references/trainset10_082014.pds.fasta, taxonomy=data/references/trainset10_082014.pds.tax, cutoff=80, processors=8);"
+	rm data/mothur_pool/HMP_MOCK.$*.pds.wang.tax.summary
+	#keep: data/mothur_pool/HMP_MOCK.$*.pds.wang.taxonomy
+
+
+GG=$(foreach R,$(REGIONS),data/mothur_pool/HMP_MOCK.$R.gg.wang.taxonomy)
+data/mothur_pool/HMP_MOCK.%.gg.wang.taxonomy : data/mothur_pool/HMP_MOCK.%.align data/references/gg_13_8_99.fasta data/references/gg_13_8_99.gg.tax
+	mothur "#classify.seqs(fasta=$<, reference=data/references/gg_13_8_99.fasta, taxonomy=data/references/gg_13_8_99.gg.tax, cutoff=80, processors=8)"
+	rm data/mothur_pool/HMP_MOCK.$*.gg.wang.tax.summary
+	#keep: data/mothur_pool/HMP_MOCK.$*.gg.wang.taxonomy
+
+
 #pipeline
-#	get sobs w/o sequencing error or chimeras
 #	classify sequences
