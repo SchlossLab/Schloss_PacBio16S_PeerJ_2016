@@ -228,15 +228,16 @@ $(MISMATCH) : $$(subst mismatches,fasta,$$@)
 
 ALIGN_SUMMARY = $(subst fasta,filter.summary,$(MOCK_FASTA))
 ERROR_SUMMARY = $(subst	summary,error.summary,$(ALIGN_SUMMARY))
-ERROR_MATRIX = $(subst summary,error.matrix,$(ALIGN_SUMMARY))
 ERROR_QUALITY = $(subst summary,error.quality,$(ALIGN_SUMMARY))
+MOCK_ANALYSIS = $(ALIGN_SUMMARY) $(ERROR_SUMMARY) $(ERROR_QUALITY)
 
-$(ALIGN_SUMMARY) : $$(subst filter.summary,fasta,$$@) $$(subst filter.summary,qual,$$@) $$(REFS)/HMP_MOCK.align
+$(MOCK_ANALYSIS) : $$(subst .filter,.fasta,$$(subst .error,,$$(basename $$@)))\
+		$$(subst .filter,.qual,$$(subst .error,,$$(basename $$@)))\
+		$$(REFS)/HMP_MOCK.align
 	$(eval FASTA = $(word 1, $^))
 	$(eval QUAL = $(word 2, $^))
 	$(eval MOCK = $(word 3, $^))
 	$(eval STUB = $(subst .fasta,,$(FASTA)))
-	@echo $(STUB)
 	cp $(MOCK) $(STUB).HMP_MOCK.align
 	mothur "#align.seqs(fasta=$(FASTA), reference=$(STUB).HMP_MOCK.align, processors=8);\
 	    filter.seqs(fasta=$(STUB).align-$(STUB).HMP_MOCK.align, vertical=T);\
@@ -253,7 +254,6 @@ $(ALIGN_SUMMARY) : $$(subst filter.summary,fasta,$$@) $$(subst filter.summary,qu
 	rm $(STUB).filter.error.ref
 	rm $(STUB).HMP_MOCK*
 
-$(ERROR_SUMMARY) $(ERROR_MATRIX) $(ERROR_QUALITY) : $$(subst error,summary,$$(basename $$@))
 
 
 # Now we need to synthesize the various output files into a report that we can
@@ -278,11 +278,6 @@ data/process/mock.error.report : $(MOCK_REPORT)
 	head -n 1 $(FIRST) > $@
 	for FILE in $^; do tail -n +2 $$FILE >> $@; done
 
-# Let's compress this final file to have a smaller version that we can put in the repo
-
-data/process/mock.error.report.gz : data/process/mock.error.report
-	gzip < $^ > $@
-
 
 # Let's pool the *.error.quality files into a single file to see whether there are
 # relationships between quality scores and specific error types
@@ -290,5 +285,12 @@ data/process/mock.error.report.gz : data/process/mock.error.report
 data/process/mock.quality.report : $(ERROR_QUALITY)
 	R -e "source('code/pool_error_quality.R'); pool('$^')"
 
-data/process/mock.quality.report.gz : data/process/mock.quality.report
+
+# Let's compress the final report files to have a smaller version that we can put
+# in the repo
+
+%.gz : %
 	gzip < $^ > $@
+
+
+
