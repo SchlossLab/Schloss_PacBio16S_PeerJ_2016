@@ -26,4 +26,4 @@ tax_level_counts <- sapply(1:nrow(combos), function(x){count_tax_levels(combos[x
 genus_species <- tax_level_counts[,"6"] + tax_level_counts[,"7"]
 composite <- cbind(combos, tax_level_counts, genus_species)
 
-write.table(file="taxonomy.depth.analysis", composite, quote=F, row.names=F)
+write.table(file="data/process/taxonomy.depth.analysis", composite, quote=F, row.names=F)
