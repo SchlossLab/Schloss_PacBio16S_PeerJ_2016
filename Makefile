@@ -27,18 +27,25 @@ REFS = data/references
 # We want the latest greatest reference alignment and the SILVA reference
 # alignment is the best reference alignment on the market. This version is from
 # v123 and described at http://blog.mothur.org/2014/08/08/SILVA-v119-reference-files/.
-# We will use the full-length version of the database, which contains 137,879
+# We will use the SEED and NR versions of the database, which contain 12,083 and 152,308
 # bacterial sequences. This also contains the reference taxonomy. We will limit
 # the databases to only include bacterial sequences.
 
-$(REFS)/silva.bacteria.% :
+$(REFS)/silva.seed.align :
+	wget -N http://mothur.org/w/images/1/15/Silva.seed_v123.tgz
+	tar xvzf Silva.seed_v123.tgz silva.seed_v123.align silva.seed_v123.tax
+	mothur "#get.lineage(fasta=silva.seed_v123.align, taxonomy=silva.seed_v123.tax, taxon=Bacteria);degap.seqs(fasta=silva.seed_v123.pick.align, processors=8)"
+	mv silva.seed_v123.pick.align $(REFS)/silva.seed.align
+	rm Silva.seed_v123.tgz silva.seed_v123.*
+
+
+$(REFS)/silva.nr.% :
 	wget -N http://mothur.org/w/images/b/be/Silva.nr_v123.tgz
 	tar xvzf Silva.nr_v123.tgz silva.nr_v123.align silva.nr_v123.tax
 	mothur "#get.lineage(fasta=silva.nr_v123.align, taxonomy=silva.nr_v123.tax, taxon=Bacteria);degap.seqs(fasta=silva.nr_v123.pick.align, processors=8)"
-	mv silva.nr_v123.pick.align $(REFS)/silva.bacteria.align
-	mv silva.nr_v123.pick.tax $(REFS)/silva.bacteria.tax
-	mv silva.nr_v123.pick.ng.fasta $(REFS)/silva.bacteria.fasta
-	rm Silva.nr_v123.tgz mothur*logfile silva.nr_v123.*
+	mv silva.nr_v123.pick.tax $(REFS)/silva.nr.tax
+	mv silva.nr_v123.pick.ng.fasta $(REFS)/silva.nr.fasta
+	rm Silva.nr_v123.tgz silva.nr_v123.*
 
 
 # We also want the greengenes reference taxonomy. This version is from the
@@ -65,11 +72,12 @@ $(REFS)/trainset14_032015.% :
 
 
 # Now, we want to align the mock community reference sequences to our newly
-# created silva.bacteria.fasta file...
+# created silva.seed.align file...
 
-$(REFS)/HMP_MOCK.% :
+$(REFS)/HMP_MOCK.% : $(REFS)/silva.seed.align
 	wget --no-check-certificate -N -P $(REFS) https://raw.githubusercontent.com/SchlossLab/Kozich_MiSeqSOP_AEM_2013/master/data/references/HMP_MOCK.fasta
-	mothur "#align.seqs(fasta=$(REFS)/HMP_MOCK.fasta, reference=$(REFS)/silva.bacteria.align)"
+	mothur "#align.seqs(fasta=$(REFS)/HMP_MOCK.fasta, reference=$^)"
+	rm $@.report
 
 
 
@@ -180,7 +188,7 @@ SAMPLE_FASTA = $(foreach S,$(SAMPLES),$(foreach B,$(sort $(basename $(FASTA_QUAL
 SAMPLE_QUAL = $(subst fasta,qual,$(SAMPLE_FASTA))
 SAMPLE_GROUPS = $(subst fasta,groups,$(SAMPLE_FASTA))
 
-$(SAMPLE_FASTA) $(SAMPLE_QUAL) $(SAMPLE_GROUPS) : $$(addsuffix .fasta,$$(basename $$(basename $$@))) $$(addsuffix .qual,$$(basename $$(basename $$@))) data/references/pacbio.oligos
+$(SAMPLE_FASTA) $(SAMPLE_QUAL) $(SAMPLE_GROUPS) : $$(addsuffix .fasta,$$(basename $$(basename $$@))) $$(addsuffix .qual,$$(basename $$(basename $$@))) $(REFS)/pacbio.oligos
 	$(eval RAW_FASTA = $(word 1, $^))
 	$(eval RAW_QUAL = $(word 2, $^))
 	$(eval OLIGOS = $(word 3, $^))
@@ -228,15 +236,16 @@ $(MISMATCH) : $$(subst mismatches,fasta,$$@)
 
 ALIGN_SUMMARY = $(subst fasta,filter.summary,$(MOCK_FASTA))
 ERROR_SUMMARY = $(subst	summary,error.summary,$(ALIGN_SUMMARY))
-ERROR_MATRIX = $(subst summary,error.matrix,$(ALIGN_SUMMARY))
 ERROR_QUALITY = $(subst summary,error.quality,$(ALIGN_SUMMARY))
+MOCK_ANALYSIS = $(ALIGN_SUMMARY) $(ERROR_SUMMARY) $(ERROR_QUALITY)
 
-$(ALIGN_SUMMARY) : $$(subst filter.summary,fasta,$$@) $$(subst filter.summary,qual,$$@) $$(REFS)/HMP_MOCK.align
+$(MOCK_ANALYSIS) : $$(subst .filter,.fasta,$$(subst .error,,$$(basename $$@)))\
+		$$(subst .filter,.qual,$$(subst .error,,$$(basename $$@)))\
+		$$(REFS)/HMP_MOCK.align
 	$(eval FASTA = $(word 1, $^))
 	$(eval QUAL = $(word 2, $^))
 	$(eval MOCK = $(word 3, $^))
 	$(eval STUB = $(subst .fasta,,$(FASTA)))
-	@echo $(STUB)
 	cp $(MOCK) $(STUB).HMP_MOCK.align
 	mothur "#align.seqs(fasta=$(FASTA), reference=$(STUB).HMP_MOCK.align, processors=8);\
 	    filter.seqs(fasta=$(STUB).align-$(STUB).HMP_MOCK.align, vertical=T);\
@@ -253,7 +262,6 @@ $(ALIGN_SUMMARY) : $$(subst filter.summary,fasta,$$@) $$(subst filter.summary,qu
 	rm $(STUB).filter.error.ref
 	rm $(STUB).HMP_MOCK*
 
-$(ERROR_SUMMARY) $(ERROR_MATRIX) $(ERROR_QUALITY) : $$(subst error,summary,$$(basename $$@))
 
 
 # Now we need to synthesize the various output files into a report that we can
@@ -278,11 +286,6 @@ data/process/mock.error.report : $(MOCK_REPORT)
 	head -n 1 $(FIRST) > $@
 	for FILE in $^; do tail -n +2 $$FILE >> $@; done
 
-# Let's compress this final file to have a smaller version that we can put in the repo
-
-data/process/mock.error.report.gz : data/process/mock.error.report
-	gzip < $^ > $@
-
 
 # Let's pool the *.error.quality files into a single file to see whether there are
 # relationships between quality scores and specific error types
@@ -290,5 +293,178 @@ data/process/mock.error.report.gz : data/process/mock.error.report
 data/process/mock.quality.report : $(ERROR_QUALITY)
 	R -e "source('code/pool_error_quality.R'); pool('$^')"
 
-data/process/mock.quality.report.gz : data/process/mock.quality.report
+
+# Let's compress the final report files to have a smaller version that we can put
+# in the repo
+
+%.gz : %
 	gzip < $^ > $@
+
+
+
+
+
+
+REGIONS = V4 V1V3 V1V5 V1V6 V1V9 V3V5
+
+POOL_FASTA = $(sort $(subst mothur_june,mothur_pool,$(subst mothur_october,mothur_pool,$(SAMPLE_FASTA))))
+
+$(POOL_FASTA) : $(SAMPLE_FASTA)
+	$(eval F = $(notdir $@))
+	cat $(filter %$F, $(SAMPLE_FASTA)) > $@
+
+
+POOL_CCS_STATS = $(sort $(subst mothur_june,mothur_pool,$(subst mothur_october,mothur_pool,$(CCS_STATS))))
+$(POOL_CCS_STATS) : $(CCS_STATS)
+	$(eval F = $(notdir $@))
+	cat $(filter %$F, $(CCS_STATS)) > $@
+
+
+
+PRED_ERROR_SCREEN = $(subst fasta,screen.fasta,$(POOL_FASTA))
+$(PRED_ERROR_SCREEN) : $$(addsuffix .ccs_stats, $$(basename $$(basename $$(basename $$@))))\
+			$$(addsuffix .fasta, $$(basename $$(basename $$@)))\
+			code/pred_error_screen.R
+	$(eval CCS_STATS = $(word 1, $^))
+	$(eval FASTA = $(word 2, $^))
+	R -e 'source("code/pred_error_screen.R");pred_error_screen("$(FASTA)", "$(CCS_STATS)")'
+
+
+
+
+UNIQUE_FASTA = $(subst fasta,unique.good.filter.unique.fasta,$(PRED_ERROR_SCREEN))
+UNIQUE_NAMES = $(subst unique.fasta,names,$(UNIQUE_FASTA))
+PRECLUSTER_FASTA = $(subst fasta,precluster.fasta,$(UNIQUE_FASTA)) 
+PRECLUSTER_NAME = $(subst fasta,names,$(PRECLUSTER_FASTA))
+
+UNIQUE_FILES = $(UNIQUE_FASTA) $(UNIQUE_NAMES)
+$(UNIQUE_FILES) : $$(subst unique.good.filter.names,fasta,$$(subst unique.fasta,names,$$@)) code/get_unique_pc_fasta.sh
+	bash code/get_unique_pc_fasta.sh $<
+
+
+UNIQUE_ERROR = $(subst fasta,error.summary,$(filter %.mock.screen.unique.good.filter.unique.fasta,$(UNIQUE_FASTA)))
+$(UNIQUE_ERROR) : $$(subst error.summary,fasta,$$@) $$(subst unique.error.summary,names,$$@) $(REFS)/HMP_MOCK.fasta
+	$(eval F=$(word 1,$^))
+	$(eval N=$(word 2,$^))
+	mothur "#seq.error(fasta=$F, name=$N, reference=$(REFS)/HMP_MOCK.fasta, processors=8, aligned=F)"
+
+
+
+
+PRECLUSTER_FILES = $(PRECLUSTER_FASTA) $(PRECLUSTER_NAMES)
+$(PRECLUSTER_FILES) : $$(subst unique.good.filter.unique.precluster,fasta,$$(basename $$@)) code/get_unique_pc_fasta.sh
+	bash code/get_unique_pc_fasta.sh $<
+
+
+
+
+PRECLUSTER_ERROR = $(subst fasta,error.summary,$(filter %.mock.screen.unique.good.filter.unique.precluster.fasta,$(PRECLUSTER_FASTA)))
+$(PRECLUSTER_ERROR) : $$(subst error.summary,fasta,$$@) $$(subst error.summary,names,$$@) $(REFS)/HMP_MOCK.fasta
+	$(eval F=$(word 1,$^))
+	$(eval N=$(word 2,$^))
+	mothur "#seq.error(fasta=$F, name=$N, reference=$(REFS)/HMP_MOCK.fasta, processors=8, aligned=F)"
+
+
+
+
+CHIMERA_FASTA = $(subst fasta,pick.fasta,$(PRECLUSTER_FASTA))
+CHIMERA_NAMES = $(subst names,pick.names,$(PRECLUSTER_NAMES))
+CHIMERA = $(CHIMERA_FASTA) $(CHIMERA_NAMES)
+$(CHIMERA) : $$(addsuffix .fasta,$$(basename $$(basename $$@))) $$(addsuffix .names,$$(basename $$(basename $$@)))
+	$(eval F=$(word 1,$^))
+	$(eval N=$(word 2,$^))
+	mothur "#chimera.uchime(fasta=$F, name=$N);remove.seqs(fasta=current, name=current, accnos=current)"
+
+
+
+LIST_FILES = $(subst fasta,an.list,$(CHIMERA_FASTA))
+$(LIST_FILES) : $$(subst an.list,fasta,$$@) $$(subst an.list,names,$$@)
+	$(eval F = $(word 1, $^))
+	$(eval N = $(word 2, $^))
+	$(eval S = $(basename $N))
+	mothur "#dist.seqs(fasta=$F, cutoff=0.15, processors=8);cluster(name=$N);"
+	rm $S.dist
+	rm $S.an.sabund
+	rm $S.an.rabund
+
+
+
+PERFECT_LIST = $(subst error.summary,perfect.an.list,$(PRECLUSTER_ERROR))
+$(PERFECT_LIST) : $$(subst perfect.an.list,error.summary,$$@) $$(subst perfect.an.list,fasta,$$@) $$(subst perfect.an.list,names,$$@)
+	$(eval E=$(word 1,$^))
+	$(eval F=$(word 2,$^))
+	$(eval N=$(word 3,$^))
+	$(eval S=$(basename $F))
+	grep "2$$" $E | cut -f 1 > $S.perfect.accnos
+	cp $F $S.perfect.fasta
+	cp $N $S.perfect.names
+	mothur "#remove.seqs(fasta=$S.perfect.fasta, name=$S.perfect.names, accnos=$S.perfect.accnos);dist.seqs(cutoff=0.15, processors=8);cluster(name=current)"
+	mv $S.perfect.pick.an.list $S.perfect.an.list
+	rm $S.perfect.pick.*abund
+	rm $S.perfect.pick.dist
+	rm $S.perfect.*names
+	rm $S.perfect.*fasta
+	rm $S.perfect.accnos
+
+
+
+UCHIME_SOBS = $(subst list,ave-std.summary,$(LIST_FILES))
+$(UCHIME_SOBS) : $$(subst ave-std.summary,list,$$@)
+	mothur "#summary.single(list=$^, label=0.03, subsample=1000,calc=nseqs-sobs-coverage)"
+	rm $(subst ave-std.,,$^)
+
+
+
+NOCHIM_SOBS = $(subst list,ave-std.summary,$(PERFECT_LIST))
+$(NOCHIM_SOBS) : $$(subst ave-std.summary,list,$$@)
+	mothur "#summary.single(list=$^, label=0.03, subsample=1000,calc=nseqs-sobs-coverage)"
+	rm $(subst ave-std.,,$@)
+
+
+
+
+MOCK_REGION_ALIGN = $(foreach R,$(REGIONS),data/mothur_pool/HMP_MOCK.$R.align)
+$(MOCK_REGION_ALIGN) : $(REFS)/HMP_MOCK.align code/get_mock_region.sh
+	$(eval REGION = $(subst .,,$(suffix $(basename $@))))
+	bash code/get_mock_region.sh $(REGION)
+
+
+MOCK_REGION_FASTA = $(subst align,fasta,$(MOCK_REGION_ALIGN))
+$(MOCK_REGION_FASTA) : $$(subst fasta,align,$$@)
+	mothur "#degap.seqs(fasta=$^)"
+	mv $(subst align,ng.fasta,$^) $@
+
+NOERROR_SOBS = $(foreach R,$(REGIONS),data/mothur_pool/HMP_MOCK.$R.pick.phylip.an.summary)
+data/mothur_pool/HMP_MOCK.%.pick.phylip.an.summary : data/mothur_pool/%.mock.screen.unique.good.filter.unique.precluster.error.summary data/mothur_pool/HMP_MOCK.%.align
+	$(eval E = $(word 1, $^))
+	grep "1$$" $E | cut -f 2 | sort | uniq > data/mothur_pool/$*.mock.screen.unique.good.filter.unique.precluster.ref.accnos
+	mothur "#get.seqs(fasta=data/mothur_pool/HMP_MOCK.$*.align, accnos=data/mothur_pool/$*.mock.screen.unique.good.filter.unique.precluster.ref.accnos);dist.seqs(cutoff=0.15, output=lt); cluster(phylip=current); summary.single(label=0.03, calc=sobs)"
+	rm data/mothur_pool/HMP_MOCK.$*.pick.phylip.an.sabund
+	rm data/mothur_pool/HMP_MOCK.$*.pick.phylip.an.rabund
+	rm data/mothur_pool/HMP_MOCK.$*.pick.phylip.an.list
+	rm data/mothur_pool/HMP_MOCK.$*.pick.phylip.dist
+	rm data/mothur_pool/HMP_MOCK.$*.pick.align
+	rm data/mothur_pool/$*.mock.screen.unique.good.filter.unique.precluster.ref.accnos
+
+
+
+
+RDP = $(subst fasta,pds.wang.taxonomy,$(CHIMERA_FASTA) $(MOCK_REGION_FASTA)) 
+$(RDP) : $$(subst pds.wang.taxonomy,fasta,$$@) data/references/trainset10_082014.pds.fasta data/references/trainset10_082014.pds.tax
+	mothur "#classify.seqs(fasta=$<,reference=data/references/trainset10_082014.pds.fasta, taxonomy=data/references/trainset10_082014.pds.tax, cutoff=80, processors=8);"
+	rm $(subst taxonomy,tax.summary,$@)
+	#keep: data/mothur_pool/*.pds.wang.taxonomy
+
+
+GG = $(subst fasta,gg.wang.taxonomy,$(CHIMERA_FASTA) $(MOCK_REGION_FASTA))
+$(GG) : $$(subst gg.wang.taxonomy,fasta,$$@) data/references/gg_13_8_99.fasta data/references/gg_13_8_99.gg.tax
+	mothur "#classify.seqs(fasta=$<, reference=data/references/gg_13_8_99.fasta, taxonomy=data/references/gg_13_8_99.gg.tax, cutoff=80, processors=8)"
+	rm $(subst taxonomy,tax.summary,$@)
+	#keep: data/mothur_pool/*.gg.wang.taxonomy
+
+
+SILVA = $(subst fasta,nr.wang.taxonomy,$(CHIMERA_FASTA) $(MOCK_REGION_FASTA))
+$(SILVA) : $$(subst nr.wang.taxonomy,fasta,$$@) data/references/silva.nr.fasta data/references/silva.nr.tax
+	mothur "#classify.seqs(fasta=$<, reference=data/references/silva.nr.fasta, taxonomy=data/references/silva.nr.tax, cutoff=80, processors=8)"
+	rm $(subst taxonomy,tax.summary,$@)
+	#keep: data/mothur_pool/*.nr.wang.taxonomy
