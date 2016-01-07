@@ -468,3 +468,6 @@ $(SILVA) : $$(subst nr.wang.taxonomy,fasta,$$@) data/references/silva.nr.fasta d
 	mothur "#classify.seqs(fasta=$<, reference=data/references/silva.nr.fasta, taxonomy=data/references/silva.nr.tax, cutoff=80, processors=8)"
 	rm $(subst taxonomy,tax.summary,$@)
 	#keep: data/mothur_pool/*.nr.wang.taxonomy
+
+data/process/taxonomy.depth.analysis : $$(filter data/mothur_pool/V%, $$(RDP) $$(GG) $$(SILVA)) code/consolidate_taxonomy.R
+	R -e "source('code/consolidate_taxonomy.R')"
