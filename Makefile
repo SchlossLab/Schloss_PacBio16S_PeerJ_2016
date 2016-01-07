@@ -423,11 +423,16 @@ $(NOCHIM_SOBS) : $$(subst ave-std.summary,list,$$@)
 
 
 
-MOCK_REGION = $(foreach R,$(REGIONS),data/mothur_pool/HMP_MOCK.$R.align)
-$(MOCK_REGION) : $(REFS)/HMP_MOCK.align code/get_mock_region.sh
+MOCK_REGION_ALIGN = $(foreach R,$(REGIONS),data/mothur_pool/HMP_MOCK.$R.align)
+$(MOCK_REGION_ALIGN) : $(REFS)/HMP_MOCK.align code/get_mock_region.sh
 	$(eval REGION = $(subst .,,$(suffix $(basename $@))))
 	bash code/get_mock_region.sh $(REGION)
 
+
+MOCK_REGION_FASTA = $(subst align,fasta,$(MOCK_REGION_ALIGN))
+$(MOCK_REGION_FASTA) : $$(subst fasta,align,$$@)
+	mothur "#degap.seqs(fasta=$^)"
+	mv $(subst align,ng.fasta,$^) $@
 
 NOERROR_SOBS = $(foreach R,$(REGIONS),data/mothur_pool/HMP_MOCK.$R.pick.phylip.an.summary)
 data/mothur_pool/HMP_MOCK.%.pick.phylip.an.summary : data/mothur_pool/%.mock.screen.unique.good.filter.unique.precluster.error.summary data/mothur_pool/HMP_MOCK.%.align
@@ -443,19 +448,23 @@ data/mothur_pool/HMP_MOCK.%.pick.phylip.an.summary : data/mothur_pool/%.mock.scr
 
 
 
-RDP=$(foreach R,$(REGIONS),data/mothur_pool/HMP_MOCK.$R.pds.wang.taxonomy)
-data/mothur_pool/HMP_MOCK.%.pds.wang.taxonomy : data/mothur_pool/HMP_MOCK.%.align data/references/trainset10_082014.pds.fasta data/references/trainset10_082014.pds.tax
+
+RDP = $(subst fasta,pds.wang.taxonomy,$(CHIMERA_FASTA) $(MOCK_REGION_FASTA)) 
+$(RDP) : $$(subst pds.wang.taxonomy,fasta,$$@) data/references/trainset10_082014.pds.fasta data/references/trainset10_082014.pds.tax
 	mothur "#classify.seqs(fasta=$<,reference=data/references/trainset10_082014.pds.fasta, taxonomy=data/references/trainset10_082014.pds.tax, cutoff=80, processors=8);"
-	rm data/mothur_pool/HMP_MOCK.$*.pds.wang.tax.summary
-	#keep: data/mothur_pool/HMP_MOCK.$*.pds.wang.taxonomy
+	rm $(subst taxonomy,tax.summary,$@)
+	#keep: data/mothur_pool/*.pds.wang.taxonomy
 
 
-GG=$(foreach R,$(REGIONS),data/mothur_pool/HMP_MOCK.$R.gg.wang.taxonomy)
-data/mothur_pool/HMP_MOCK.%.gg.wang.taxonomy : data/mothur_pool/HMP_MOCK.%.align data/references/gg_13_8_99.fasta data/references/gg_13_8_99.gg.tax
+GG = $(subst fasta,gg.wang.taxonomy,$(CHIMERA_FASTA) $(MOCK_REGION_FASTA))
+$(GG) : $$(subst gg.wang.taxonomy,fasta,$$@) data/references/gg_13_8_99.fasta data/references/gg_13_8_99.gg.tax
 	mothur "#classify.seqs(fasta=$<, reference=data/references/gg_13_8_99.fasta, taxonomy=data/references/gg_13_8_99.gg.tax, cutoff=80, processors=8)"
-	rm data/mothur_pool/HMP_MOCK.$*.gg.wang.tax.summary
-	#keep: data/mothur_pool/HMP_MOCK.$*.gg.wang.taxonomy
+	rm $(subst taxonomy,tax.summary,$@)
+	#keep: data/mothur_pool/*.gg.wang.taxonomy
 
 
-#pipeline
-#	classify sequences
+SILVA = $(subst fasta,nr.wang.taxonomy,$(CHIMERA_FASTA) $(MOCK_REGION_FASTA))
+$(SILVA) : $$(subst nr.wang.taxonomy,fasta,$$@) data/references/silva.nr.fasta data/references/silva.nr.tax
+	mothur "#classify.seqs(fasta=$<, reference=data/references/silva.nr.fasta, taxonomy=data/references/silva.nr.tax, cutoff=80, processors=8)"
+	rm $(subst taxonomy,tax.summary,$@)
+	#keep: data/mothur_pool/*.nr.wang.taxonomy
