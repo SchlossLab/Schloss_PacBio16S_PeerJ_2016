@@ -22,7 +22,7 @@ combos <- cbind(region=rep(regions, each=length(databases)*length(datasets)),
 				dataset=rep(datasets, length(regions)*length(databases)),
 				db=rep(rep(databases, each=length(datasets)), length(regions)))
 
-tax_level_counts <- sapply(1:nrow(combos), function(x){count_tax_levels(combos[x,])})
+tax_level_counts <- t(sapply(1:nrow(combos), function(x){count_tax_levels(combos[x,])}))
 genus_species <- tax_level_counts[,"6"] + tax_level_counts[,"7"]
 composite <- cbind(combos, tax_level_counts, genus_species)
 
