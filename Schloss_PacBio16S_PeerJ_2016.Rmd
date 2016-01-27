@@ -724,15 +724,15 @@ rownames(pooled_error) <- regions
 
 reduction <- 100*(1-pooled_error[,"precluster"]/pooled_error[,"unique"])
 
-min.region <- paste(pretty.region[names(rnd.reduction[rnd.reduction==min.rnd.red])],collapse=" and ")
-max.region <- pretty.region[[names(rnd.reduction[rnd.reduction==max.rnd.red])]]
+min.region <- pretty_region[names(reduction[which.min(reduction)])]
+max.region <- pretty_region[names(reduction[which.max(reduction)])]
 ```
 
 ***Pre-clustering sequences to further reduce sequencing noise.***
 Previously, we implemented a pre-clustering algorithm where sequences were sorted
 by their abundance in decreasing order and rare sequences are clustered with a
 more abundant sequence if the rare sequences have fewer mismatches than a
-defined threshold when compared to the more abundant sequence [refs]. The recommended
+defined threshold when compared to the more abundant sequence [@refs]. The recommended
 threshold was a 1-nt difference per 100-nt of sequence data. For example, the
 threshold for 250 bp fragment from the V4 region would be 2 nt or 14 for the
 1458 bp V1-V9 fragments. This approach removes residual PCR and sequencing
@@ -740,7 +740,7 @@ errors while not overwhelming the resolution needed to identify OTUs that are
 based on a 3% distance threshold. The tradeoff of this approach is that one would
 unable to differentiate V1-V9 sequences that truly differed by less than 14 nt.
 When we applied this approach to our PacBio data, we observed a reduction in the error rate
-between `r min.rnd.red` (`r min.region`) and `r max.rnd.red`% (`r max.region`).
+between `r min(reduction)` (`r min.region`) and `r max(reduction)`% (`r max.region`).
 The final error rates varied between
 `r round(100*min(pooled_error[,"precluster"]), digits=2)` (`r names(which.min(pooled_error[,"precluster"]))`) and `r round(100*max(pooled_error[,"precluster"]), digits=2)`% (`r names(which.max(pooled_error[,"precluster"]))`).
  The full-length (i.e. V1V9) fragments had an error rate of
@@ -750,52 +750,53 @@ Illumina MiSeq platforms (0.02%){Schloss, 2011 #2466; Kozich, 2013 #2719}
 
 
 ```{r}
+getAveSobs <- function(region, sample){
+	file_name <- paste0("data/mothur_pool/", region, ".", sample, ".screen.unique.good.filter.unique.precluster.pick.an.ave-std.summary")
+
+	data_sobs <- NA
+
+	if(file.exists(file_name)){
+		data <- read.table(file=file_name, header=T)
+		data_sobs <- data[data$method=="ave", "sobs"]
+	}
+
+	data_sobs
+}
+
 getOTUResults <- function(region){
-  perfect <- read.table(file=paste0("analysis/", region, "/HMP_MOCK.filter.pick.phylip.an.summary"), header=T)
-  nochims <- read.table(file=paste0("analysis/", region, "/", region, ".mock.precluster.perfect.pick.an.ave-std.summary"), header=T)
-  observed <- read.table(file=paste0("analysis/",region, "/", region, ".trim.unique.good.filter.unique.precluster.pick.an.merge.groups.ave-std.summary"), header=T)
-	obs.mock <- observed[observed$group=="mock"   & observed$method=="ave", "sobs"]
-	obs.soil <- observed[observed$group=="soil"   & observed$method=="ave", "sobs"]
-	obs.mouse <- observed[observed$group=="mouse" & observed$method=="ave", "sobs"]
-	obs.human <- observed[observed$group=="human" & observed$method=="ave", "sobs"]
+ 	perfect <- read.table(file=paste0("data/mothur_pool/HMP_MOCK.", region, ".pick.phylip.an.summary"), header=T)
+ 	nochims <- read.table(file=paste0("data/mothur_pool/", region, ".mock.screen.unique.good.filter.unique.precluster.perfect.an.ave-std.summary"), header=T)
+
+ 	obs.mock <- getAveSobs(region, "mock")
+ 	obs.mouse <- getAveSobs(region, "mouse")
+ 	obs.human <- getAveSobs(region, "human")
+ 	obs.soil <- getAveSobs(region, "soil")
+
 	nseqs <- nochims[nochims$method=="ave", "nseqs"]
 
-	return(c(perfect[1,2], nochims[1,3], obs.mock, obs.soil, obs.mouse, obs.human, nseqs))
+	return(c(perfect[1,2], nochims[1,"sobs"], obs.mock, obs.soil, obs.mouse, obs.human, nseqs))
 }
 
 otu.table <- t(sapply(regions, getOTUResults))
-nseqs <- otu.table[1,7]
+nseqs <- otu.table[[1,7]]
 perfect.otu <- otu.table[1,1]
 otu.table <- otu.table[,-c(1,7)]
 
-otu.table <- cbind(100 * final.error[rownames(otu.table),"precluster.error"], otu.table)
+otu.table <- cbind(100 * pooled_error[rownames(otu.table),"precluster"], otu.table)
 colnames(otu.table) <- c("Error Rate (%)", "Mock with no chimeras", "Observed mock", "Soil", "Mouse", "Human")
-rownames(otu.table) <- pretty.region[rownames(otu.table)]
+rownames(otu.table) <- pretty_region[rownames(otu.table)]
 
 #kable(otu.table, digits=c(2, rep(1,5)))
 
 #|      | Error Rate (%)| Mock with no chimeras| Observed mock|  Soil| Mouse| Human|
 #|:-----|--------------:|---------------------:|-------------:|-----:|-----:|-----:|
-#|V4    |           0.14|                  26.0|          27.4| 335.8|  78.5|  58.1|
-#|V1-V3 |           0.77|                  53.6|          77.0| 436.6| 159.7| 116.8|
-#|V3-V5 |           0.83|                  83.1|         106.8| 388.9| 259.6|  91.6|
-#|V1-V5 |           0.26|                  34.6|          40.7| 403.2|  88.8|  74.7|
-#|V1-V6 |           0.57|                  57.4|          89.7| 431.9| 138.3|  95.9|
-#|V1-V9 |           0.32|                  29.5|          41.8| 390.9|  81.9| 102.0|
+#|V4    |           0.16|                  33.4|          48.7| 630.1| 212.4| 117.0|
+#|V1-V3 |           0.07|                  20.5|          27.7| 726.3| 107.5| 105.4|
+#|V3-V5 |           0.04|                  21.1|          31.2|    NA| 112.3|  83.7|
+#|V1-V5 |           0.02|                  19.8|          27.2| 694.4|  66.0|  85.3|
+#|V1-V6 |           0.03|                  20.0|          46.4| 693.3|  75.5|  89.2|
+#|V1-V9 |           0.03|                  19.5|          40.3|    NA| 102.7| 117.6|
 
-getCoverage <- function(region){
-  observed <- read.table(file=paste0("analysis/",region, "/", region, ".trim.unique.good.filter.unique.precluster.pick.an.merge.groups.ave-std.summary"), header=T)
-	obs.mock <- observed[observed$group=="mock"   & observed$method=="ave", "coverage"]
-	obs.soil <- observed[observed$group=="soil"   & observed$method=="ave", "coverage"]
-	obs.mouse <- observed[observed$group=="mouse" & observed$method=="ave", "coverage"]
-	obs.human <- observed[observed$group=="human" & observed$method=="ave", "coverage"]
-
-	return(c(obs.mock, obs.soil, obs.mouse, obs.human))
-}
-
-coverage.table <- t(sapply(regions, getCoverage))
-colnames(coverage.table) <- c("Mock", "Soil", "Mouse", "Human")
-rownames(coverage.table) <- pretty.region[rownames(coverage.table)]
 ```
 
 ***Effects of error rates on OTU assignments.***
@@ -806,46 +807,45 @@ achieved perfect chimera removal, but allowed for PCR and sequencing errors, we
 observed between `r diff<-otu.table[,2]-perfect.otu;
 round(min(diff), digits=1)` (`r names(which.min(diff))`) and `r round(max(diff), digits=1)`
 (`r names(which.max(diff))`) extra OTUs. The range in the number of extra OTUs was largely
-explained by the sequencing error rate (Pearson's R=`r round(cor.test(diff, final.error[,"precluster.error"])$estimate, 2)`). Next, we determined
+explained by the sequencing error rate (Pearson's R=`r round(cor.test(diff, pooled_error[,"precluster"])$estimate, 2)`). Next, we determined
 the number of OTUs that were observed when we used UCHIME to identify chimeric sequence.
 Under these more realistic conditions, we observed between `r diff<-otu.table[,3]-perfect.otu;
 round(min(diff), digits=1)` (`r names(which.min(diff))`) and `r round(max(diff), digits=1)`
 (`r names(which.max(diff))`) extra OTUs. Finally, we calculated the number of OTUs in the
 soil, mouse, and human samples using the same pipeline with chimera detection and removal
-based on the UCHIME algorithm. Again, we found that there was a strong correlation between
+based on the UCHIME algorithm. Suprisingly, there was not a clear relationship across sample type and region. Again, we found that there was a strong correlation between
 the number of observed OTUs and the error rate for the
-soil (R=`r format(round(cor.test(otu.table[,"Soil"], final.error[,"precluster.error"])$estimate, 2), nsmall=2)`),
-mouse (R=`r format(round(cor.test(otu.table[,"Mouse"], final.error[,"precluster.error"])$estimate, 2), nsmall=2)`),
-and human samples (R=`r format(round(cor.test(otu.table[,"Human"], final.error[,"precluster.error"])$estimate, 2), nsmall=2)`).
+mouse (R=`r format(round(cor.test(otu.table[,"Mouse"], pooled_error[,"precluster"])$estimate, 2), nsmall=2)`)
+and human samples (R=`r format(round(cor.test(otu.table[,"Human"], pooled_error[,"precluster"])$estimate, 2), nsmall=2)`).
 These results underscore the effect of sequencing error on the inflation of the number of
 observed OTUs.
 
 
 ```{r, classificationSummary}
-data <- read.table(file="taxonomy.depth.analysis", header=T)
+data <- read.table(file="data/process/taxonomy.depth.analysis", header=T)
 
-rdp <- cbind("Mock"=data[data$database=="rdp" & data$sample=="mock", "total"],
-						 "Human"=data[data$database=="rdp" & data$sample=="human", "total"],
-						 "Mouse"=data[data$database=="rdp" & data$sample=="mouse", "total"],
-						 "Soil"=data[data$database=="rdp" & data$sample=="soil", "total"])
+rdp <- 100 * cbind("Mock"=data[data$db=="pds" & data$dataset=="mock", "genus_species"],
+				 "Human"=data[data$db=="pds" & data$dataset=="human", "genus_species"],
+				 "Mouse"=data[data$db=="pds" & data$dataset=="mouse", "genus_species"],
+				 "Soil"=data[data$db=="pds" & data$dataset=="soil", "genus_species"])
 rownames(rdp) <- c("V4", "V3-V5", "V1-V3", "V1-V5", "V1-V6", "V1-V9")
 
-gg <- cbind("Mock"=data[data$database=="gg" & data$sample=="mock", "total"],
-						"Human"=data[data$database=="gg" & data$sample=="human", "total"],
-						"Mouse"=data[data$database=="gg" & data$sample=="mouse", "total"],
-						"Soil"=data[data$database=="gg" & data$sample=="soil", "total"])
+gg <- 100 * cbind("Mock"=data[data$db=="gg" & data$dataset=="mock", "genus_species"],
+				"Human"=data[data$db=="gg" & data$dataset=="human", "genus_species"],
+				"Mouse"=data[data$db=="gg" & data$dataset=="mouse", "genus_species"],
+				"Soil"=data[data$db=="gg" & data$dataset=="soil", "genus_species"])
 rownames(gg) <- c("V4", "V3-V5", "V1-V3", "V1-V5", "V1-V6", "V1-V9")
 
-silva <- cbind("Mock"=data[data$database=="silva" & data$sample=="mock", "total"],
-							 "Human"=data[data$database=="silva" & data$sample=="human", "total"],
-							 "Mouse"=data[data$database=="silva" & data$sample=="mouse", "total"],
-							 "Soil"=data[data$database=="silva" & data$sample=="soil", "total"])
+silva <- 100 * cbind("Mock"=data[data$db=="nr" & data$dataset=="mock", "genus_species"],
+					 "Human"=data[data$db=="nr" & data$dataset=="human", "genus_species"],
+					 "Mouse"=data[data$db=="nr" & data$dataset=="mouse", "genus_species"],
+					 "Soil"=data[data$db=="nr" & data$dataset=="soil", "genus_species"])
 rownames(silva) <- c("V4", "V3-V5", "V1-V3", "V1-V5", "V1-V6", "V1-V9")
 
-gg.sp <- cbind("Mock"=data[data$database=="gg" & data$sample=="mock", "X7"],
-							 "Human"=data[data$database=="gg" & data$sample=="human", "X7"],
-							 "Mouse"=data[data$database=="gg" & data$sample=="mouse", "X7"],
-							 "Soil"=data[data$database=="gg" & data$sample=="soil", "X7"])
+gg.sp <- 100 * cbind("Mock"=data[data$db=="gg" & data$dataset=="mock", "X7"],
+					 "Human"=data[data$db=="gg" & data$dataset=="human", "X7"],
+					 "Mouse"=data[data$db=="gg" & data$dataset=="mouse", "X7"],
+					 "Soil"=data[data$db=="gg" & data$dataset=="soil", "X7"])
 rownames(gg.sp) <- c("V4", "V3-V5", "V1-V3", "V1-V5", "V1-V6", "V1-V9")
 ```
 
@@ -874,51 +874,49 @@ reference database.
 
 
 ```{r}
-error <- read.table(file="analysis/v4/v4.trim.unique.good.filter.unique.pick.error.summary", header=T, row.names=1)
-error.nochim <- error[error$numparents==1,]
-one.off <- error.nochim[error.nochim$mismatches==1,]
-one.off.sum <- sum(one.off$weight)
-v4.table <- table(one.off$weight)
-v4.total <- sum(error$weight)
 
-error <- read.table(file="analysis/v35/v35.trim.unique.good.filter.unique.pick.error.summary", header=T, row.names=1)
-error.nochim <- error[error$numparents==1,]
-one.off <- error.nochim[error.nochim$mismatches==1,]
-one.off.sum <- sum(one.off$weight)
-v35.table <- table(one.off$weight)
-v35.total <- sum(error$weight)
+getRegionNonRandom <- function(region){
+	file_name <- paste0("data/mothur_pool/", region, ".mock.screen.unique.good.filter.unique.error.summary")
 
-error <- read.table(file="analysis/v15/v15.trim.unique.good.filter.unique.pick.error.summary", header=T, row.names=1)
-error.nochim <- error[error$numparents==1,]
-one.off <- error.nochim[error.nochim$mismatches==1,]
-one.off.sum <- sum(one.off$weight)
-v15.table <- table(one.off$weight)
-v15.total <- sum(error$weight)
+	error <- read.table(file=file_name, header=T, row.names=1)
+	error.nochim <- error[error$numparents==1,]
+
+	one.off <- error.nochim[error.nochim$mismatches==1,]
+
+	one.off.n <- sum(one.off$weight)
+	one.off.table <- table(one.off$weight)
+	nseqs <- sum(error.nochim$weight)
+	one.off.table
+}
+
+non_random <- lapply(regions, getRegionNonRandom)
+names(non_random) <- regions
+
+percent_one_off <- 100 * sapply(non_random, function(x){x[1]/sum(x)})
+
 ```
 
 ***Sequencing errors are not random.***
 Above, we described that although there was no obvious bias in the substitution
-or insertion rate, we did observe that guanines and cytosines were more likely
-to be deleted than adenines and thymidines. This lack of randomness in the error
+or insertion rate, we did observe that guanines and adenines were more likely to
+be deleted than cytosines or thymidines. This lack of randomness in the error
 profile suggested that there might be a systematic non-random distribution of
 the errors across the sequences. This would manifest itself by the creation of
-duplicate sequences with the same error. Because we were able to obtain a large
-number of reads from the mock communities where we sequenced the V4
-(N=`r v4.total`), V1-V5 (N=`r v15.total` sequences), and V3-V5 (N=`r v35.total`)
-regions, we investigated the mock community data from these regions further. We
-identified all of the sequences that had a 1-nt difference to the true sequence.
-For these three regions, a majority of the sequences with 1-nt errors were only
-observed once (V4: `r round(100*v4.table[1]/sum(v4.table), 1)`%, V1-V5:
-`r round(100*v15.table[1]/sum(v15.table), 1)`%, V3-V5:
-`r round(100*v35.table[1]/sum(v35.table), 1)`%). We found that the frequency of the
-most abundant 1-nt error paralleled the number of sequences. There were two sequences
-in the V4 dataset that occurred `r names(v4.table[length(v4.table)])` times, one
-sequence in the V1-V5 dataset that occurred `r names(v15.table[length(v15.table)])`
-times, and one sequence in the V3-V5 dataset that occurred
-`r names(v35.table[length(v35.table)])` times. Contrary to previous reports
+duplicate sequences with the same error. We identified all of the mock community
+sequences that had a 1-nt difference to the true sequence. For these three
+regions, between `r min(percent_one_off)` and `r max(percent_one_off)` of the
+sequences with 1-nt errors were only observed once. We found that the frequency
+of the most abundant 1-nt error paralleled the number of sequences.
+Surprisingly, the same 1-nt error appeared
+`r as.numeric(names(non_random$V1V6[length(non_random$V1V6)]))` times in the
+V1-V6 mock data and another 1-nt error appeared
+`r as.numeric(names(non_random$V1V9[length(non_random$V1V9)]))` times in the
+V1-V9 mock data. Contrary to previous reports
 {Carneiro, 2012 #3458;Koren, 2012 #3459}, these results indicate that
-reproducible errors occur with the PacBio sequencing platform and that they can be
-quite frequent.
+reproducible errors occur with the PacBio sequencing platform and that they can
+be quite abundant. Through the use of the pre-clustering step described above
+these 1-nt errors would be ameliorated; however, this result indicates that
+caution should be used when attempting to use fine-scale OTU definitions.
 
 
 ## Conclusions
@@ -931,7 +929,7 @@ sequence fragments (error rates below 0.02%) {Kozich, 2013 #2719}. The promise o
 sequencing platform was the generation of high-quality near full-length sequence
 fragments. As we have shown in this study, it is possible to generate near
 full-length sequences; however, the error rate associated with those reads is
-considerable (i.e. `r round(100*final.error["v19","precluster.error"],2)`%)
+considerable (i.e. `r round(100*pooled_error["v19","precluster.error"],2)`%)
 and requires a level of sequencing coverage that is not commonly observed in a
 typical sequencing run. This results in the generation of a small number of low
 quality full-length sequences. When we considered the shorter V4 region, which is
@@ -1054,7 +1052,7 @@ ecoli <- "AAATTGAAGAGTTTGATCATGGCTCAGATTGAACGCTGGCGGCAGGCCTAACACATGCAAGTCGAACGGT
 
 
 oligos <- read.table(file="pacbio.oligos", stringsAsFactors=F)[1:6,]
-rownames(oligos) <- pretty.region[oligos$V4]
+rownames(oligos) <- pretty_region[oligos$V4]
 oligos <- oligos[,c("V2", "V3")]
 colnames(oligos) <- c("Forward", "Reverse")
 
@@ -1078,7 +1076,7 @@ knitr::kable(t1, digits=1, row.names=TRUE, col.names=c("Forward", "Reverse", "*E
 basic sequence curation steps**
 
 ```{r Table_2, warning=TRUE, results='asis'}
-rownames(reasons.lost) <- pretty.region[rownames(reasons.lost)]
+rownames(reasons.lost) <- pretty_region[rownames(reasons.lost)]
 reasons.lost <- cbind(orig.nseqs, 100*reasons.lost, basic.nseqs)
 knitr::kable(reasons.lost, digits=1, row.names=TRUE,
 						 col.names=c("Initial sequences (N)", "Good reads (%)",
@@ -1214,7 +1212,7 @@ axis(2, at=seq(0,0.05, 0.01), label=FALSE, tick=T, las=2)
 #axis(2, at=seq(0,0.05, 0.01), label=seq(0,5, 1), las=2)
 axis(1, cex.axis=1.5)
 lapply(regions, plotLines)
-legend(x=18, y=0.05, legend=pretty.region[regions], lty=1, lwd=2, col=clrs[regions])
+legend(x=18, y=0.05, legend=pretty_region[regions], lty=1, lwd=2, col=clrs[regions])
 mtext(side=2, line=0.5, at=0.05, text="C", cex=2, font=2, las=2)
 title(xlab="Coverage", ylab="", cex.lab=1.5)
 box()
@@ -1415,7 +1413,7 @@ title(ylab="Sequences above threshold (%)")
 axis(2, at=seq(0,1,0.2), label=FALSE, tick=TRUE)
 mtext(side=2, line=0.6, at=1, text="D", las=2, cex=2, font=2)
 
-legend(x=10, y=0.50, legend=pretty.region[regions], lty=1, lwd=2, col=clrs[regions], cex=1.0)
+legend(x=10, y=0.50, legend=pretty_region[regions], lty=1, lwd=2, col=clrs[regions], cex=1.0)
 ```
 
 
