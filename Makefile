@@ -334,7 +334,7 @@ $(PRED_ERROR_SCREEN) : $$(addsuffix .ccs_stats, $$(basename $$(basename $$(basen
 
 UNIQUE_FASTA = $(subst fasta,unique.good.filter.unique.fasta,$(PRED_ERROR_SCREEN))
 UNIQUE_NAMES = $(subst unique.fasta,names,$(UNIQUE_FASTA))
-PRECLUSTER_FASTA = $(subst fasta,precluster.fasta,$(UNIQUE_FASTA)) 
+PRECLUSTER_FASTA = $(subst fasta,precluster.fasta,$(UNIQUE_FASTA))
 PRECLUSTER_NAME = $(subst fasta,names,$(PRECLUSTER_FASTA))
 
 UNIQUE_FILES = $(UNIQUE_FASTA) $(UNIQUE_NAMES)
@@ -449,7 +449,7 @@ data/mothur_pool/HMP_MOCK.%.pick.phylip.an.summary : data/mothur_pool/%.mock.scr
 
 
 
-RDP = $(subst fasta,pds.wang.taxonomy,$(CHIMERA_FASTA) $(MOCK_REGION_FASTA)) 
+RDP = $(subst fasta,pds.wang.taxonomy,$(CHIMERA_FASTA) $(MOCK_REGION_FASTA))
 $(RDP) : $$(subst pds.wang.taxonomy,fasta,$$@) data/references/trainset10_082014.pds.fasta data/references/trainset10_082014.pds.tax
 	mothur "#classify.seqs(fasta=$<,reference=data/references/trainset10_082014.pds.fasta, taxonomy=data/references/trainset10_082014.pds.tax, cutoff=80, processors=8);"
 	rm $(subst taxonomy,tax.summary,$@)
