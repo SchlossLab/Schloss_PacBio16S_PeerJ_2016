@@ -874,7 +874,6 @@ reference database.
 
 
 ```{r}
-
 getRegionNonRandom <- function(region){
 	file_name <- paste0("data/mothur_pool/", region, ".mock.screen.unique.good.filter.unique.error.summary")
 
@@ -893,7 +892,6 @@ non_random <- lapply(regions, getRegionNonRandom)
 names(non_random) <- regions
 
 percent_one_off <- 100 * sapply(non_random, function(x){x[1]/sum(x)})
-
 ```
 
 ***Sequencing errors are not random.***
@@ -925,61 +923,52 @@ able to fill unique needs and have their own strengths and weaknesses. For
 sequencing the 16S rRNA gene, the 454 platform is able to generate a moderate
 number of high-quality 500-nt sequence fragments (error rates below 0.02%) {Schloss, 2011 #2466} and
 the MiSeq platform is able to generate a large number of high-quality 250-nt
-sequence fragments (error rates below 0.02%) {Kozich, 2013 #2719}. The promise of the PacBio
-sequencing platform was the generation of high-quality near full-length sequence
-fragments. As we have shown in this study, it is possible to generate near
-full-length sequences; however, the error rate associated with those reads is
-considerable (i.e. `r round(100*pooled_error["v19","precluster.error"],2)`%)
-and requires a level of sequencing coverage that is not commonly observed in a
-typical sequencing run. This results in the generation of a small number of low
-quality full-length sequences. When we considered the shorter V4 region, which is
-similar in length to what is sequenced by the MiSeq platform, the error rates
-we observed with the PacBio platform were nearly 5-fold higher than what has
-previously been reported. It appears that the promise offered by the PacBio
-platform has not been realized.
+sequence fragments (error rates below 0.02%) {Kozich, 2013 #2719}. The promise
+of the PacBio sequencing platform was the generation of high-quality near
+full-length sequence fragments. As we have shown in this study, it is possible
+to generate near full-length sequences with error rates that are slightly
+higher, but comparable to the other platforms (i.e.
+`r round(100*pooled_error["V1V9","precluster"],2)`%).
+With the exception of the V4 region, the error rates were less than
+`r 100*max(pooled_error[!(rownames(pooled_error) %in% "V4"),"precluster"])`%.
+When we considered the shorter V4 region, which is similar in length to what is
+sequenced by the MiSeq platform, the error rates we observed with the PacBio
+platform were nearly 8-fold higher than what has previously been reported. It
+was unclear why these shorter reads had such a high error rate relative to the
+other regions. At this point, the primary limitation of generating full-length
+sequences on the PacBio platform is the cost of generating the data and
+accessibility to the sequencers.
 
 The widespread adoption of the 454 and MiSeq platforms and decrease in the use
-of Sanger
-sequencing for the 16S rRNA gene has resulted in a decrease in the
+of Sanger sequencing for the 16S rRNA gene has resulted in a decrease in the
 generation of the full-length reference sequences that are needed for performing
 phylogenetic analyses and designing lineage specific PCR primers and fluorescent
 *in situ* hybridization (FISH) probes. It remains to be determined whether the
-elevated error rates we observed for full-length sequences are prohibitive for
+error rates we observed for full-length sequences are prohibitive for
 these applications. We can estimate the distribution of errors assuming that the
 errors follow a binomial distribution along the length of the 1,500 nt
 gene with the error rate that we achieved from the V1-V9 mock community data
 prior to pre-clustering the sequences, which was
-`r round(100*final.error["v19","unique.error"],2)`% (Figure 5). Under
+`r round(100*pooled_error["V1V9","unique"],2)`% (Figure 5). Under
 these conditions one would only expect
-`r round(100*dbinom(0, 1500, final.error["v19","unique.error"]), 2)`% of the
-sequences to have no errors. In fact, 95% of the reads would have at least
-`r qbinom(0.05, 1500, final.error["v19","unique.error"])` errors and 50% of the
-reads would have at least
-`r qbinom(0.50, 1500, final.error["v19","unique.error"])` errors. If the error
-rate could be dropped to 0.25%, then 95% of
-the reads would have at least
-`r qbinom(0.05, 1500, 0.0025)` error and 50% of the
-reads would have at least
-`r qbinom(0.50, 1500, 0.0025)` errors. If it were possible to replicate the low
-error rates we have previously observed using the 454 and Illumina MiSeq
-platforms, which was 0.02%, then we would expect
-`r round(100*dbinom(0, 1500, 0.0002), 1)`% of the sequences to have no errors.
-In fact, 95% of the reads would have `r qbinom(0.95, 1500, 0.0002)` or fewer
-errors. Although full-length sequence data is highly desired, at this point, it
-does not appear that the PacBio platform can provide the data of sufficient
-quality to fill the niche of generating reference sequences.
+`r round(100*dbinom(0, 1500, pooled_error["V1V9","unique"]), 2)`% of the
+sequences to have no errors and 50% of the sequences would have at least
+`r qbinom(0.50, 1500, pooled_error["V1V9","unique"])` errors. After applying the pre-clustering denoising step, the erro rate drops by `r round(pooled_error["V1V9","unique"]/pooled_error["V1V9","precluster"])`-fold to
+`r 100*pooled_error["V1V9","precluster"]`%. With this error rate, we would
+expect `r round(100*dbinom(0, 1500, pooled_error["V1V9","precluster"]), 2)`%
+of the sequences to have no sequencing errors. Of course, the tradeoff is the
+loss of resolution among closely related sequences.
 
 Full-length sequences are frequently seen as a panacea to overcome the
 limitations of taxonomic classifications. The ability to classify each of our
 sample types benefited from the generation of full-length sequences. It was
 interesting that the benefit varied by sample type and database. For example,
 using the mouse libraries, the ability to classify each of the regions differed
-by less than 5%
-when classifying against the SILVA and greengenes databases. The effect of the
-database that was used was also interesting. The RDP database outperformed the
-other databases for the mouse samples and the SILVA database outperformed the
-others for the human and soil samples. The three databases were equally
-effective for classifying the mock community. Finally, since only the
+by less than 5% when classifying against the SILVA and greengenes databases. The
+effect of the database that was used was also interesting. The RDP database
+outperformed the other databases for the mouse samples and the SILVA database
+outperformed the others for the human and soil samples. The three databases were
+equally effective for classifying the mock community. Finally, since only the
 greengenes database provided species-level information for its reference
 sequences it was the only database that allowed for resolution of species-level
 classification. The sequences from the mouse and soil libraries were not
@@ -997,10 +986,10 @@ these various platforms, it is critical that we assess the platforms for their
 ability to generate high quality data and the particular niche that the new
 approach will fill. With this in mind, it is essential that researchers utilize
 mock communities as part of their experimental design so that they can quantify
-their error rates. The ability to generate large numbers of near full-length 16S
-rRNA gene sequences is an exciting advance. At this point, the excitement must
-be tempered by the appreciation that the error rates limit the application of
-the approach.
+their error rates. The ability to generate near full-length 16S rRNA gene
+sequences is an exciting advance that will hopefully expand our ability to
+improve the characterization of microbial communities.
+
 
 
 ## Acknowledgements
@@ -1123,13 +1112,6 @@ SILVA, or greengenes databases for the four types of samples that were sequenced
 across the six regions from the 16S rRNA gene. Only the greengenes taxonomy
 reference provided species-level information.
 
-**Figure 5. The percentage of V1-V9 sequences that were predicted to have
-between 0 and 20 errors as a function of the error rate of the sequences.** The
-highest error rate, `r round(100*final.error["v19","unique.error"], 2)`%,
-corresponds to what was observed before the pre-clustering step.
-The smallest error rate (0.02%) corresponds to our previous observations using
-the 454 and MiSeq sequencing platforms. The predicted number of errors was
-assumed to follow a binomial distribution.
 
 
 
@@ -1439,34 +1421,4 @@ points(x=gg.sp[,"Mouse"], y=9:14, pch=21, bg="gray")
 points(x=gg.sp[,"Soil"], y=1:6, pch=21, bg="gray")
 
 legend(x=63, y=12, legend=c("RDP (gen.)", "SILVA (gen.)", "greengenes (gen.+sp.)", "greengenes (sp.)"), pch=c(15, 17, 19, 21), col="black", pt.bg=c("black", "black", "black", "gray"), bg="white")
-```
-
-
-
-### Figure 5
-
-```{r Figure_5, fig.width=7, fig.height=4}
-x <- 0:20
-e1 <- final.error["v19","unique.error"]
-e2 <- 0.0025
-e3 <- 0.0010
-e4 <- 0.0002
-
-par(mar=c(5,6,0.5, 0.5))
-plot(x, dbinom(x, 1458, e1), type="l", ylim=c(0,0.35), xlab="Number of errors",
-		 ylab="Full-length 16S rRNA\ngene sequences (%)", yaxt="n", lwd=3)
-points(x, dbinom(x, 1458, e2), type="l", col="red", lwd=3)
-points(x, dbinom(x, 1458, e3), type="l", col="blue", lwd=3)
-points(x, dbinom(x, 1458, e4), type="l", col="darkgreen", lwd=3)
-axis(2, at=seq(0,0.35,0.05), label=seq(0,35,5), las=1)
-legend(x=12, y=0.30, legend=paste0(format(round(100*c(e1, e2, e3, e4), 2), nsmall=2), "%"),
-			 lwd=3, col=c("black", "red", "blue", "darkgreen"))
-```
-
-
-
-
-
-```{r, versions}
-sessionInfo()
 ```
