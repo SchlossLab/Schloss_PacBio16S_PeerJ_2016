@@ -670,7 +670,7 @@ increased sequencing coverage should yield lower error rates. We found that once
 we had obtained 10-fold coverage of the fragments, the error rate did not change
 appreciably (Figure 1C). When we compared the error rates of reads with at least
 10-fold coverage to those with less coverage, we reduced the error rate by
-`r paste(format(range(coverage_reduction), digits=3, nsmall=1), collapse=" to ")`%
+`r paste(format(range(base_error_reduction), digits=3, nsmall=1), collapse=" to ")`%
 (Figure 2). Third, based on the observed correlation between the
 predicted and observed error rates, we sought to identify a minimum predicted
 error rate that would allow us to reduce the observed error rate. The average
@@ -1004,10 +1004,6 @@ This study was supported by grants from the NIH (R01HG005975, R01GM099514 and
 P30DK034933 to PDS and U54HG004973 to SKH).
 
 
-## References
-
-
-
 ## Tables
 
 **Table 1. Summary of the primer pairs used to generate the 16S rRNA gene fragment fragments and the characteristics of each region.**
@@ -1122,32 +1118,28 @@ layout(matrix(c(1,2,3), nrow=1), heights=1, widths=c(0.75,1,1))
 
 #Panel A depicting range of quality scores for different errors
 par(mar=c(6, 5, 0.5, 0.5))
-plot(1, xlim=c(0.5, 4.5), ylim=c(0,75), type="n", yaxt="n", xaxt="n", xlab="",
-		 ylab="")
+plot(1, xlim=c(0.5, 4.5), ylim=c(0,75), type="n", yaxt="n", xaxt="n", xlab="", ylab="")
 polygon(x=c(0.75, 1.25, 1.25, 0.75), y=c(m.quant["25%"], m.quant["25%"],
-																				 m.quant["75%"], m.quant["75%"]))
+											 m.quant["75%"], m.quant["75%"]))
 polygon(x=c(1.75, 2.25, 2.25, 1.75), y=c(s.quant["25%"], s.quant["25%"],
-																				 s.quant["75%"], s.quant["75%"]))
+											 s.quant["75%"], s.quant["75%"]))
 polygon(x=c(2.75, 3.25, 3.25, 2.75), y=c(i.quant["25%"], i.quant["25%"],
-																				 i.quant["75%"], i.quant["75%"]))
+											 i.quant["75%"], i.quant["75%"]))
 polygon(x=c(3.75, 4.25, 4.25, 3.75), y=c(a.quant["25%"], a.quant["25%"],
-																				 a.quant["75%"], a.quant["75%"]))
+											 a.quant["75%"], a.quant["75%"]))
 
 segments(x0=seq(0.75, 3.75, 1), x1=seq(1.25,4.25,1), y0=c(m.quant["50%"],
 											s.quant["50%"], i.quant["50%"], a.quant["50%"]), lwd=4)
 
 arrows(x0=1:4, y0=c(m.quant["75%"], s.quant["75%"], i.quant["75%"],
-										a.quant["75%"]), y1=c(m.quant["97.5%"], s.quant["97.5%"],
-																					i.quant["97.5%"], a.quant["97.5%"]),
-			 angle=90, length=0.05)
+					a.quant["75%"]), y1=c(m.quant["97.5%"], s.quant["97.5%"],
+					i.quant["97.5%"], a.quant["97.5%"]), angle=90, length=0.05)
 
 arrows(x0=1:4, y0=c(m.quant["25%"], s.quant["25%"], i.quant["25%"],
-										a.quant["25%"]), y1=c(m.quant["2.5%"], s.quant["2.5%"],
-																					i.quant["2.5%"], a.quant["2.5%"]),
-			 angle=90, length=0.05)
+					a.quant["25%"]), y1=c(m.quant["2.5%"], s.quant["2.5%"],
+					i.quant["2.5%"], a.quant["2.5%"]), angle=90, length=0.05)
 
-axis(1, at=c(1,2,3,4), label=c("Matches", "Substitutions", "Insertions",
-															 "Ambiguous"), las=2, cex.axis=1)
+axis(1, at=c(1,2,3,4), label=c("Matches", "Substitutions", "Insertions", "Ambiguous"), las=2, cex.axis=1)
 axis(2, las=2, at=c(0,25,50,75), cex.axis=1.5)
 title(ylab="Quality score", cex.lab=1.5)
 mtext(side=2, line=2.5, at=75, text="A", cex=2, font=2, las=2)
@@ -1170,14 +1162,11 @@ mtext(side=2, line=2.5, at=5, text="B", cex=2, font=2, las=2)
 #the different regions that were sequence
 plotLines <- function(folder){
 	composite <- read.table(file=paste("pipeline_dev/", folder, "/", folder,
-																		 ".composite", sep=""),
-													header=T,row.names=1)
+								 ".composite", sep=""), header=T,row.names=1)
 
 	composite <- composite[composite$reason=="g",]
 	error.by.depth <- aggregate(composite$error, by=list(composite$freq),
-															function(x){c(mean=mean(x),
-																						quantile(x, prob=c(0.025, 0.975)),
-																						n=length(x))})
+						function(x){c(mean=mean(x), quantile(x, prob=c(0.025, 0.975)), n=length(x))})
 
 	#exclude any coverage values where we don't have at least 50 observations
 	error.by.depth <- error.by.depth[error.by.depth$x[,"n"]>=50,]
@@ -1207,9 +1196,9 @@ layout(1)
 ### Figure 2
 ```{r Figure_2, width=6.5, height=6}
 error.fraction <- cbind(initial.error=init.rates, basic.error=basic.error,
-												bcprimer.error, coverage.error, aveq.error,
-												oligosCoverage.error, oligosQScore.error,
-												coverageQScore.error, allFilters.error, final.error)
+							bcprimer.error, coverage.error, aveq.error,
+							oligosCoverage.error, oligosQScore.error,
+							coverageQScore.error, allFilters.error, final.error)
 rownames(error.fraction) <- gsub("v(\\d*)", "\\1", rownames(error.fraction))
 
 error <- 100 * error.fraction[,grepl("error", colnames(error.fraction))]
@@ -1297,15 +1286,13 @@ layout(1)
 aggregateErrorMinQualityScore <- function(folder){
 	write(folder, "")
 	composite <- read.table(file=paste("pipeline_dev/", folder, "/", folder,
-																		 ".composite", sep=""), header=T,
-													row.names=1)
+								 ".composite", sep=""), header=T, row.names=1)
 	composite <- composite[composite$reason == "g",]
 
 	remaining.error <- rep(0, max(composite$minQ)+1)
 	qscores <- 0:max(composite$minQ)
 
-	remaining.error <- unlist(lapply(qscores,
-														function(x){mean(composite[composite$minQ >= x,"error"])}))
+	remaining.error <- unlist(lapply(qscores, function(x){mean(composite[composite$minQ >= x,"error"])}))
 	names(remaining.error) <- qscores
 	points(x=10:70, remaining.error[10:70], type="l", col=clrs[folder], lwd=2)
 }
@@ -1314,7 +1301,7 @@ fractionMinQualityScore <- function(folder){
 	write(folder, "")
 
 	composite <- read.table(file=paste("pipeline_dev/", folder, "/", folder,
-																		 ".composite", sep=""), header=T, row.names=1)
+					 				".composite", sep=""), header=T, row.names=1)
 	composite <- composite[composite$reason == "g",]
 
 	binned <- aggregate(composite$error, by=list(round(composite$minQ)), length)
@@ -1326,13 +1313,13 @@ fractionMinQualityScore <- function(folder){
 aggregateErrorAveQualityScore <- function(folder){
 	write(folder, "")
 	composite <- read.table(file=paste("pipeline_dev/", folder, "/", folder,
-																		 ".composite", sep=""), header=T, row.names=1)
+								 ".composite", sep=""), header=T, row.names=1)
 	composite <- composite[composite$reason == "g",]
 
 	remaining.error <- rep(0, max(composite$aveQ)+1)
 	qscores <- 0:max(composite$aveQ)
 	remaining.error <- unlist(lapply(qscores,
-												function(x){mean(composite[composite$aveQ >= x,"error"])}))
+					function(x){mean(composite[composite$aveQ >= x,"error"])}))
 	names(remaining.error) <- qscores
 	points(x=10:70, remaining.error[10:70], type="l", col=clrs[folder], lwd=2)
 }
@@ -1342,7 +1329,7 @@ fractionAveQualityScore <- function(folder){
 write(folder, "")
 
 	composite <- read.table(file=paste("pipeline_dev/", folder, "/", folder,
-																		 ".composite", sep=""), header=T, row.names=1)
+								 ".composite", sep=""), header=T, row.names=1)
 	composite <- composite[composite$reason == "g",]
 
 	binned <- aggregate(composite$error, by=list(round(composite$aveQ)), length)
@@ -1422,3 +1409,6 @@ points(x=gg.sp[,"Soil"], y=1:6, pch=21, bg="gray")
 
 legend(x=63, y=12, legend=c("RDP (gen.)", "SILVA (gen.)", "greengenes (gen.+sp.)", "greengenes (sp.)"), pch=c(15, 17, 19, 21), col="black", pt.bg=c("black", "black", "black", "gray"), bg="white")
 ```
+
+
+## References
