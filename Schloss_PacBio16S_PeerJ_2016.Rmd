@@ -685,7 +685,7 @@ the most significant impact on reducing the observed error rate. Furthermore,
 the inclusion of the mismatch and coverage filters had a negligible impact on
 error rates, but had a significant impact on the number of sequences included in
 the analysis. For instance, among the V1-V9 data, requiring sequences to have a
-predicted error rate less than 0.01% resulted in a `r format(base_error_reduction["pred_error_reduction","V1V9"], digits=3, nsmall=1)`% and resulted in the removal of `r format(base_nseqs_reduction["pred_error_reduction","V1V9"], digits=3, nsmall=1)`% of the sequences. Adding the mismatch or coverage filter
+predicted error rate less than 0.01% resulted in a `r format(base_error_reduction["pred_error_reduction","V1V9"], digits=3, nsmall=1)`% and resulted in the removal of `r format(base_nseqs_reduction["pred_nseqs_reduction","V1V9"], digits=3, nsmall=1)`% of the sequences. Adding the mismatch or coverage filter
 had no effect on the reduction of error, but resulted in the removal of
 `r format(base_nseqs_reduction["oligos_pred_nseqs_reduction","V1V9"], digits=3, nsmall=1)` and
 `r format(base_nseqs_reduction["coverage_pred_nseqs_reduction","V1V9"], digits=3, nsmall=1)`% of the sequences, respectively. Use of all filters had no impact on the reduction in the observed
@@ -1036,7 +1036,7 @@ ecoli <- "AAATTGAAGAGTTTGATCATGGCTCAGATTGAACGCTGGCGGCAGGCCTAACACATGCAAGTCGAACGGT
 
 
 
-oligos <- read.table(file="pacbio.oligos", stringsAsFactors=F)[1:6,]
+oligos <- read.table(file="data/references/pacbio.oligos", stringsAsFactors=F)[1:6,]
 rownames(oligos) <- pretty_region[oligos$V4]
 oligos <- oligos[,c("V2", "V3")]
 colnames(oligos) <- c("Forward", "Reverse")
