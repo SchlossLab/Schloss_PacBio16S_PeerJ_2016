@@ -479,10 +479,14 @@ data/process/taxonomy.depth.analysis : $$(filter data/mothur_pool/V%, $$(RDP) $$
 Schloss_PacBio16S_PeerJ_2016.md : \
 						peerj.csl\
 						references.bib\
-						Schloss_Census2_mBio_2016.Rmd
+						Schloss_PacBio16S_PeerJ_2016.Rmd
 	R -e 'render("Schloss_PacBio16S_PeerJ_2016.Rmd", clean=FALSE)'
 	mv Schloss_PacBio16S_PeerJ_2016.knit.md Schloss_PacBio16S_PeerJ_2016.md
 	rm Schloss_PacBio16S_PeerJ_2016.utf8.md
 	mv Schloss_PacBio16S_PeerJ_2016.pdf submission/Schloss_PacBio16S_PeerJ_2016.pdf
 
-submission/Schloss_Census2_mBio_2016.pdf : Schloss_PacBio16S_PeerJ_2016.md
+submission/Schloss_PacBio16S_PeerJ_2016.pdf : Schloss_PacBio16S_PeerJ_2016.md
+
+
+write.paper :	Schloss_PacBio16S_PeerJ_2016.md\
+		submission/Schloss_PacBio16S_PeerJ_2016.pdf
