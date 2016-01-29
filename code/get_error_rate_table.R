@@ -237,7 +237,7 @@ base_error_reduction <- rbind(	raw = NA,
 								coverage_pred = coverage_pred_error_reduction,
 								pb_coverage = oligos_coverage_error_reduction,
 								pb_pred = oligos_pred_error_reduction,
-								all = all_filters_error_reduction_1,
+								all = all_filters_error_reduction,
 								precluster = precluster_error_reduction
 							)
 
@@ -249,7 +249,7 @@ base_nseqs_reduction <- rbind(	raw = NA,
 								coverage_pred = coverage_pred_nseqs_reduction,
 								pb_coverage = oligos_coverage_nseqs_reduction,
 								pb_pred = oligos_pred_nseqs_reduction,
-								all = all_filters_nseqs_reduction_1,
+								all = all_filters_nseqs_reduction,
 								precluster = precluster_nseqs_reduction
 							)
 
@@ -257,7 +257,7 @@ error <- rbind(	raw = raw_rates["error",],
 				basic = basic_rates["error",],
 				pb = pb_error["1",],
 				pred = pred_error_data["error",],
-				coverage = coverage_data["error",],
+				coverage = coverage_error["error",],
 				coverage_pred = coverage_pred_error[,"error"],
 				pb_coverage = oligos_coverage_error[,"error"],
 				pb_pred = oligos_pred_error[,"error"],
@@ -269,7 +269,7 @@ nseqs <- rbind(	raw = raw_rates["nseqs",],
 				basic = basic_rates["nseqs",],
 				pb = pb_nseqs["1",],
 				pred = pred_error_data["nseqs",],
-				coverage = coverage_data["nseqs",],
+				coverage = coverage_error["nseqs",],
 				coverage_pred = coverage_pred_error[,"nseqs"],
 				pb_coverage = oligos_coverage_error[,"nseqs"],
 				pb_pred = oligos_pred_error[,"nseqs"],
@@ -279,11 +279,11 @@ nseqs <- rbind(	raw = raw_rates["nseqs",],
 
 summary_data <- data.frame(
 				cbind(	error = as.vector(error),
-						nseqs = as.vector(nseqs)
+						nseqs = as.vector(nseqs),
 						error_red = as.vector(base_error_reduction),
 						nseqs_red = as.vector(base_nseqs_reduction)
 					))
-summary_data$region <- rep(colnames(error_summary), each=nrow(error_summary))
-summary_data$method <- rep(rownames(error_summary), ncol(error_summary))
+summary_data$region <- rep(colnames(error), each=nrow(error))
+summary_data$method <- rep(rownames(error), ncol(error))
 
 write.table(summary_data, file="data/process/error_summary.tsv", quote=F, row.names=F, sep='\t')
