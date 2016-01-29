@@ -301,6 +301,10 @@ data/process/mock.quality.report : $(ERROR_QUALITY)
 	gzip < $^ > $@
 
 
+data/process/error_profile.json : code/get_error_profile.R \
+								data/process/mock.quality.report\
+								data/process/mock.error.report
+	R "source('code/get_error_profile.R')"
 
 
 
@@ -471,6 +475,8 @@ $(SILVA) : $$(subst nr.wang.taxonomy,fasta,$$@) data/references/silva.nr.fasta d
 
 data/process/taxonomy.depth.analysis : $$(filter data/mothur_pool/V%, $$(RDP) $$(GG) $$(SILVA)) code/consolidate_taxonomy.R
 	R -e "source('code/consolidate_taxonomy.R')"
+
+
 
 
 
