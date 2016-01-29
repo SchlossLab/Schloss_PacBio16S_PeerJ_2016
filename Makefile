@@ -482,7 +482,7 @@ data/process/error_summary.tsv : code/get_error_rate_table.R\
 	R "source('code/get_error_rate_table.R')"
 
 
-data/process/taxonomy.depth.analysis : $$(filter data/mothur_pool/V%, $$(RDP) $$(GG) $$(SILVA)) code/consolidate_taxonomy.R
+data/process/taxonomy_depth_analysis.tsv : $$(filter data/mothur_pool/V%, $$(RDP) $$(GG) $$(SILVA)) code/consolidate_taxonomy.R
 	R -e "source('code/consolidate_taxonomy.R')"
 
 
