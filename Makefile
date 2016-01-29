@@ -278,35 +278,6 @@ $(MOCK_REPORT) : code/consolidate_data.R\
 	R -e "source('$<');generate_report('$@')"
 
 
-# Let's pool all of the mock report files together and toss the output into the
-# data/process folder
-
-data/process/mock.error.report : $(MOCK_REPORT)
-	$(eval FIRST = $(word 1, $^))
-	head -n 1 $(FIRST) > $@
-	for FILE in $^; do tail -n +2 $$FILE >> $@; done
-
-
-# Let's pool the *.error.quality files into a single file to see whether there are
-# relationships between quality scores and specific error types
-
-data/process/mock.quality.report : $(ERROR_QUALITY)
-	R -e "source('code/pool_error_quality.R'); pool('$^')"
-
-
-# Let's compress the final report files to have a smaller version that we can put
-# in the repo
-
-%.gz : %
-	gzip < $^ > $@
-
-
-data/process/error_profile.json : code/get_error_profile.R \
-								data/process/mock.quality.report\
-								data/process/mock.error.report
-	R "source('code/get_error_profile.R')"
-
-
 
 
 REGIONS = V4 V1V3 V1V5 V1V6 V1V9 V3V5
@@ -473,8 +444,47 @@ $(SILVA) : $$(subst nr.wang.taxonomy,fasta,$$@) data/references/silva.nr.fasta d
 	rm $(subst taxonomy,tax.summary,$@)
 	#keep: data/mothur_pool/*.nr.wang.taxonomy
 
+
+
+# Let's pool all of the mock report files together and toss the output into the
+# data/process folder
+
+data/process/mock.error.report : $(MOCK_REPORT)
+	$(eval FIRST = $(word 1, $^))
+	head -n 1 $(FIRST) > $@
+	for FILE in $^; do tail -n +2 $$FILE >> $@; done
+
+
+# Let's pool the *.error.quality files into a single file to see whether there are
+# relationships between quality scores and specific error types
+
+data/process/mock.quality.report : $(ERROR_QUALITY)
+	R -e "source('code/pool_error_quality.R'); pool('$^')"
+
+
+# Let's compress the final report files to have a smaller version that we can put
+# in the repo
+
+%.gz : %
+	gzip < $^ > $@
+
+
+
+data/process/error_profile.json : code/get_error_profile.R \
+								data/process/mock.quality.report\
+								data/process/mock.error.report
+	R "source('code/get_error_profile.R')"
+
+
+data/process/error_summary.tsv : code/get_error_rate_table.R\
+								data/process/mock.error.report\
+								$(PRECLUSTER_ERROR)
+	R "source('code/get_error_rate_table.R')"
+
+
 data/process/taxonomy.depth.analysis : $$(filter data/mothur_pool/V%, $$(RDP) $$(GG) $$(SILVA)) code/consolidate_taxonomy.R
 	R -e "source('code/consolidate_taxonomy.R')"
+
 
 
 
