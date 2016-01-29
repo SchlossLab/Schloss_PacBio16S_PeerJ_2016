@@ -34,11 +34,12 @@ inline_hook <- function(x){
 knitr::knit_hooks$set(inline=inline_hook)
 
 regions <- c("V1V3", "V1V5", "V1V6", "V1V9", "V3V5", "V4")
-clrs <- rainbow(length(regions))
 pretty_region <- c("V1V3"="V1-V3", "V1V5"="V1-V5", "V1V6"="V1-V6", "V1V9"="V1-V9", "V3V5"="V3-V5", "V4"="V4")
+
+clrs <- rainbow(length(regions))
 names(clrs) <- regions
 
-library(json)
+library(rjson)
 ```
 
 \vspace{35mm}
@@ -268,7 +269,8 @@ markdown file are available as a public online repository
 ```{r error_profile}
 error_profile <- fromJSON(scan("data/process/error_profile.json", quiet=T, what="character"))
 
-
+error_summary <- read.table(file="data/process/error_summary.tsv", header=T)
+raw_to_basic_lost <- 100 * (1 - error_summary[error_summary$method == "basic","nseqs"]/error_summary[error_summary$method == "raw","nseqs"])
 
 ```
 
@@ -289,13 +291,12 @@ than cytosines (`r error_profile$del_bias$dC, digits=3, nsmall=1)`%) or thymidin
 We established a simple curation procedure by culling any sequence that had a
 string of the same base repeated more than 8 times  or did not start and end at
 the expected alignment coordinates for that region of the 16S rRNA gene. This
-reduced the experiment-wide error rate from `r format(init_error_rate, digits=3, nsmall=2)` to
-`r format(basic_error_rate, digits=2, nsmall=2)`%. This basic procedure
-resulted in the removal of between
-`r format(min(100-basic_kept), digits=3, nsmall=1)`
-(`r pretty_region[names(which.min(100-basic_kept))]`) and
-`r format(max(100-basic_kept), digits=3, nsmall=1)`
-(`r pretty_region[names(which.max(100-basic_kept))]`)% of the reads (Table 2). Although
+reduced the experiment-wide error rate from `r format(mean(error_summary[error_summary$method=="raw","error"]), digits=3, nsmall=2)` to
+`r format(mean(error_summary[error_summary$method=="basic","error"]), digits=2, nsmall=2)`%. This basic procedure resulted in the removal of between
+`r format(min(raw_to_basic_lost), digits=3, nsmall=1)`
+(`r pretty_region[names(which.min(raw_to_basic_lost))]`) and
+`r format(max(raw_to_basic_lost), digits=3, nsmall=1)`
+(`r pretty_region[names(which.max(raw_to_basic_lost))]`)% of the reads (Table 2). Although
 the percentage of reads removed increased with the length of the fragment, there
 was no obvious relationship between fragment length and error rate (Figure 2).
 
@@ -313,10 +314,7 @@ coverage_overall <- coverage_overall[as.character(3:40)]
 
 #This is for the Figure 2D plot...
 pred_overall <- aggregate(100 * mock_error_basic$error, by=list(round(mock_error_basic$pred_error, 3)), mean)
-
 ```
-
-
 
 
 ***Identifying correlates of increased sequencing error.***
@@ -338,7 +336,7 @@ increased sequencing coverage should yield lower error rates. We found that once
 we had obtained 10-fold coverage of the fragments, the error rate did not change
 appreciably (Figure 1C). When we compared the error rates of reads with at least
 10-fold coverage to those with less coverage, we reduced the error rate by
-`r paste(format(range(base_error_reduction), digits=3, nsmall=1), collapse=" to ")`%
+`r paste(format(range(error_summary[error_summary$method == "coverage","error_red"]), digits=3, nsmall=1), collapse=" to ")`%
 (Figure 2). Third, based on the observed correlation between the
 predicted and observed error rates, we sought to identify a minimum predicted
 error rate that would allow us to reduce the observed error rate. The average
@@ -346,55 +344,22 @@ observed error rate for sequences with predicted error rates between 0.01 and
 0.10% was linear (Figure 1D). We decided to use a threshold of 0.01% because a
 large number of sequence reads were lost when we used a smaller threshold. When
 we used this threshold, we were able to reduce the error rate by
-`r paste(format(range(pred_error_reduction), digits=3, nsmall=1), collapse=" to ")`%
+`r paste(format(range(error_summary[error_summary$method == "pred","error_red"]), digits=3, nsmall=1), collapse=" to ")`%
 (Figure 2A). Finally, we quantified the effect of combining filters. We found that
 any combination of filters that included the predicted error rate threshold had
 the most significant impact on reducing the observed error rate. Furthermore,
 the inclusion of the mismatch and coverage filters had a negligible impact on
 error rates, but had a significant impact on the number of sequences included in
 the analysis. For instance, among the V1-V9 data, requiring sequences to have a
-predicted error rate less than 0.01% resulted in a `r format(base_error_reduction["pred_error_reduction","V1V9"], digits=3, nsmall=1)`% and resulted in the removal of `r format(base_nseqs_reduction["pred_nseqs_reduction","V1V9"], digits=3, nsmall=1)`% of the sequences. Adding the mismatch or coverage filter
+predicted error rate less than 0.01% resulted in a
+`r format(error_summary[error_summary$method == "pred" & error_summary$region == "V1V9","error_red"], digits=3, nsmall=1)`% reduction in error and resulted in the removal of
+`r format(error_summary[error_summary$method == "pred" & error_summary$region == "V1V9","nseqs_red"], digits=3, nsmall=1)`% of the sequences. Adding the mismatch or coverage filter
 had no effect on the reduction of error, but resulted in the removal of
-`r format(base_nseqs_reduction["oligos_pred_nseqs_reduction","V1V9"], digits=3, nsmall=1)` and
-`r format(base_nseqs_reduction["coverage_pred_nseqs_reduction","V1V9"], digits=3, nsmall=1)`% of the sequences, respectively. Use of all filters had no impact on the reduction in the observed
-error rate, but resulted in the removal of `r format(base_nseqs_reduction["all_filters_nseqs_reduction","V1V9"], digits=3, nsmall=1)`% of the sequences. The remainder of this paper only uses sequences with a predicted error rate less than 0.01%.
+`r format(error_summary[error_summary$method == "pb_pred" & error_summary$region == "V1V9","nseqs_red"], digits=3, nsmall=1)` and
+`r format(error_summary[error_summary$method == "coverage_pred" & error_summary$region == "V1V9","nseqs_red"], digits=3, nsmall=1)`
+% of the sequences, respectively. Use of all filters had no impact on the reduction in the observed
+error rate, but resulted in the removal of `r format(error_summary[error_summary$method == "all" & error_summary$region == "V1V9","nseqs_red"], digits=3, nsmall=1)`% of the sequences. The remainder of this paper only uses sequences with a predicted error rate less than 0.01%.
 
-
-```{r precluster}
-get_error_rate <- function(file_name){
-	error_summary <- read.table(file=file_name, header=T, stringsAsFactors=FALSE)
-	nochim <- error_summary[error_summary$numparents==1,]
-    sum(nochim$weight * nochim$mismatches) / sum(nochim$weight * nochim$total)
-}
-
-regions <- c("V4", "V1V3", "V1V5", "V1V6", "V1V9", "V3V5")
-
-unique_file_names <- paste0("data/mothur_pool/", regions, ".mock.screen.unique.good.filter.unique.error.summary")
-
-unique_error <- sapply(unique_file_names, get_error_rate)
-
-precluster_file_names <- paste0("data/mothur_pool/", regions,".mock.screen.unique.good.filter.unique.precluster.error.summary")
-
-precluster_error <- sapply(precluster_file_names, get_error_rate)
-
-
-pooled_error <- cbind(unique = unique_error, precluster = precluster_error)
-rownames(pooled_error) <- regions
-
-#          unique   precluster
-#V4   0.003205151 0.0015805612
-#V1V3 0.002529819 0.0006841053
-#V1V5 0.001987322 0.0001938975
-#V1V6 0.001910158 0.0003086235
-#V1V9 0.001944654 0.0002743820
-#V3V5 0.002076498 0.0003532300
-
-
-reduction <- 100*(1-pooled_error[,"precluster"]/pooled_error[,"unique"])
-
-min.region <- pretty_region[names(reduction[which.min(reduction)])]
-max.region <- pretty_region[names(reduction[which.max(reduction)])]
-```
 
 ***Pre-clustering sequences to further reduce sequencing noise.***
 Previously, we implemented a pre-clustering algorithm where sequences were sorted
@@ -408,11 +373,19 @@ errors while not overwhelming the resolution needed to identify OTUs that are
 based on a 3% distance threshold. The tradeoff of this approach is that one would
 unable to differentiate V1-V9 sequences that truly differed by less than 14 nt.
 When we applied this approach to our PacBio data, we observed a reduction in the error rate
-between `r min(reduction)` (`r min.region`) and `r max(reduction)`% (`r max.region`).
+between
+`r format(min(error_summary[error_summary$method == "precluster","nseqs_red"]), digits=3, nsmall=1)`
+(`r pretty_region[which.min(error_summary[error_summary$method == "precluster","nseqs_red"])]`)
+and `r format(max(error_summary[error_summary$method == "precluster","nseqs_red"]), digits=3, nsmall=1)`%
+(`r pretty_region[which.max(error_summary[error_summary$method == "precluster","nseqs_red"])]`).
 The final error rates varied between
-`r round(100*min(pooled_error[,"precluster"]), digits=2)` (`r names(which.min(pooled_error[,"precluster"]))`) and `r round(100*max(pooled_error[,"precluster"]), digits=2)`% (`r names(which.max(pooled_error[,"precluster"]))`).
- The full-length (i.e. V1V9) fragments had an error rate of
-`r round(100* pooled_error["V1V9","precluster"], digits=2)`%
+`r round(min(error_summary[error_summary$method == "precluster","error"]), digits=2)`
+(`r pretty_region[which.min(error_summary[error_summary$method == "precluster","error"])]`)
+and
+`r round(max(error_summary[error_summary$method == "precluster","error"]), digits=2)`%
+(`r pretty_region[which.max(error_summary[error_summary$method == "precluster","error"])]`).
+The full-length (i.e. V1-V9) fragments had an error rate of
+`r round(error_summary[error_summary$method == "precluster" & error_summary$region=="V1V9","error"], digits=2)`%
 (Figure 2B), this is similar to what we have previously observed using the 454 and
 Illumina MiSeq platforms (0.02%){Schloss, 2011 #2466; Kozich, 2013 #2719}
 
