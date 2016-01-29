@@ -320,6 +320,7 @@ $(UNIQUE_FILES) : $$(subst unique.good.filter.names,fasta,$$(subst unique.fasta,
 UNIQUE_ERROR = $(subst fasta,error.summary,$(filter %.mock.screen.unique.good.filter.unique.fasta,$(UNIQUE_FASTA)))
 $(UNIQUE_ERROR) : $$(subst error.summary,fasta,$$@) $$(subst unique.error.summary,names,$$@) $(REFS)/HMP_MOCK.fasta
 	$(eval F=$(word 1,$^))
+
 	$(eval N=$(word 2,$^))
 	mothur "#seq.error(fasta=$F, name=$N, reference=$(REFS)/HMP_MOCK.fasta, processors=8, aligned=F)"
 
@@ -473,13 +474,13 @@ data/process/mock.quality.report : $(ERROR_QUALITY)
 data/process/error_profile.json : code/get_error_profile.R \
 								data/process/mock.quality.report\
 								data/process/mock.error.report
-	R "source('code/get_error_profile.R')"
+	R -e "source('code/get_error_profile.R')"
 
 
 data/process/error_summary.tsv : code/get_error_rate_table.R\
 								data/process/mock.error.report\
 								$(PRECLUSTER_ERROR)
-	R "source('code/get_error_rate_table.R')"
+	R -e "source('code/get_error_rate_table.R')"
 
 
 data/process/taxonomy_depth_analysis.tsv : $$(filter data/mothur_pool/V%, $$(RDP) $$(GG) $$(SILVA)) code/consolidate_taxonomy.R
