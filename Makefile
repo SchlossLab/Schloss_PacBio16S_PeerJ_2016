@@ -387,13 +387,13 @@ $(PERFECT_LIST) : $$(subst perfect.an.list,error.summary,$$@) $$(subst perfect.a
 UCHIME_SOBS = $(subst list,ave-std.summary,$(LIST_FILES))
 $(UCHIME_SOBS) : $$(subst ave-std.summary,list,$$@)
 	mothur "#summary.single(list=$^, label=0.03, subsample=1000,calc=nseqs-sobs-coverage)"
-	rm $(subst ave-std.,,$@)
+	touch $@
 
 
 NOCHIM_SOBS = $(subst list,ave-std.summary,$(PERFECT_LIST))
 $(NOCHIM_SOBS) : $$(subst ave-std.summary,list,$$@)
 	mothur "#summary.single(list=$^, label=0.03, subsample=1000,calc=nseqs-sobs-coverage)"
-	rm $(subst ave-std.,,$@)
+	touch $@
 
 
 MOCK_REGION_ALIGN = $(foreach R,$(REGIONS),data/mothur_pool/HMP_MOCK.$R.align)

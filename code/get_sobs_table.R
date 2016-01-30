@@ -6,7 +6,7 @@ getAveSobs <- function(region, sample){
 
 	data_sobs <- NA
 
-	if(file.exists(file_name)){
+	if(file.size(file_name) != 0){
 		data <- read.table(file=file_name, header=T)
 		data_sobs <- data[data$method=="ave", "sobs"]
 	}
@@ -33,4 +33,4 @@ nseqs <- otu_table[[1,7]]
 
 colnames(otu_table) <- c("no_error","no_chimeras", "mock", "soil", "mouse", "human", "nseqs")
 
-write.table(file="data/process/sobs_table.tsv")
+write.table(otu_table, file="data/process/sobs_table.tsv")
