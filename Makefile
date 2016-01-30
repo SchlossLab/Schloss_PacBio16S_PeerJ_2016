@@ -492,8 +492,9 @@ data/process/taxonomy_depth_analysis.tsv : $$(filter data/mothur_pool/V%, $$(RDP
 	R -e "source('code/consolidate_taxonomy.R')"
 
 
-
-
+data/process/non_random_analysis.tsv : code/get_one_off_table.R\
+							$(UNIQUE_ERROR)
+	R -e "source('code/get_one_off_table.R')"
 
 
 
