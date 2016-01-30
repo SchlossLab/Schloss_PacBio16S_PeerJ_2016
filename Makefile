@@ -397,8 +397,6 @@ $(NOCHIM_SOBS) : $$(subst ave-std.summary,list,$$@)
 	rm $(subst ave-std.,,$@)
 
 
-
-
 MOCK_REGION_ALIGN = $(foreach R,$(REGIONS),data/mothur_pool/HMP_MOCK.$R.align)
 $(MOCK_REGION_ALIGN) : $(REFS)/HMP_MOCK.align code/get_mock_region.sh
 	$(eval REGION = $(subst .,,$(suffix $(basename $@))))
@@ -409,6 +407,7 @@ MOCK_REGION_FASTA = $(subst align,fasta,$(MOCK_REGION_ALIGN))
 $(MOCK_REGION_FASTA) : $$(subst fasta,align,$$@)
 	mothur "#degap.seqs(fasta=$^)"
 	mv $(subst align,ng.fasta,$^) $@
+
 
 NOERROR_SOBS = $(foreach R,$(REGIONS),data/mothur_pool/HMP_MOCK.$R.pick.phylip.an.summary)
 data/mothur_pool/HMP_MOCK.%.pick.phylip.an.summary : data/mothur_pool/%.mock.screen.unique.good.filter.unique.precluster.error.summary data/mothur_pool/HMP_MOCK.%.align
@@ -483,9 +482,15 @@ data/process/error_summary.tsv : code/get_error_rate_table.R\
 	R -e "source('code/get_error_rate_table.R')"
 
 
+data/process/sobs_table.tsv : code/get_sobs_table.R\
+							$(UCHIME_SOBS)\
+							$(NOCHIM_SOBS)\
+							$(NOERROR_SOBS)
+	R -e "source('code/get_sobs_table.R')"
+
+
 data/process/taxonomy_depth_analysis.tsv : $$(filter data/mothur_pool/V%, $$(RDP) $$(GG) $$(SILVA)) code/consolidate_taxonomy.R
 	R -e "source('code/consolidate_taxonomy.R')"
-
 
 
 
@@ -497,6 +502,7 @@ Schloss_PacBio16S_PeerJ_2016.md : \
 						data/process/error_profile.json\
 						data/process/error_summary.tsv\
 						data/process/taxonomy_depth_analysis.tsv\
+						data/process/sobs_table.tsv\
 						\
 						peerj.csl\
 						references.bib\
