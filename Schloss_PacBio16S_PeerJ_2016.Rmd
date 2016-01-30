@@ -291,53 +291,7 @@ Previously, we implemented a pre-clustering algorithm where sequences were sorte
 
 
 ```{r}
-getAveSobs <- function(region, sample){
-	file_name <- paste0("data/mothur_pool/", region, ".", sample, ".screen.unique.good.filter.unique.precluster.pick.an.ave-std.summary")
-
-	data_sobs <- NA
-
-	if(file.exists(file_name)){
-		data <- read.table(file=file_name, header=T)
-		data_sobs <- data[data$method=="ave", "sobs"]
-	}
-
-	data_sobs
-}
-
-getOTUResults <- function(region){
- 	perfect <- read.table(file=paste0("data/mothur_pool/HMP_MOCK.", region, ".pick.phylip.an.summary"), header=T)
- 	nochims <- read.table(file=paste0("data/mothur_pool/", region, ".mock.screen.unique.good.filter.unique.precluster.perfect.an.ave-std.summary"), header=T)
-
- 	obs.mock <- getAveSobs(region, "mock")
- 	obs.mouse <- getAveSobs(region, "mouse")
- 	obs.human <- getAveSobs(region, "human")
- 	obs.soil <- getAveSobs(region, "soil")
-
-	nseqs <- nochims[nochims$method=="ave", "nseqs"]
-
-	return(c(perfect[1,2], nochims[1,"sobs"], obs.mock, obs.soil, obs.mouse, obs.human, nseqs))
-}
-
-otu.table <- t(sapply(regions, getOTUResults))
-nseqs <- otu.table[[1,7]]
-perfect.otu <- otu.table[1,1]
-otu.table <- otu.table[,-c(1,7)]
-
-otu.table <- cbind(100 * pooled_error[rownames(otu.table),"precluster"], otu.table)
-colnames(otu.table) <- c("Error Rate (%)", "Mock with no chimeras", "Observed mock", "Soil", "Mouse", "Human")
-rownames(otu.table) <- pretty_region[rownames(otu.table)]
-
-#kable(otu.table, digits=c(2, rep(1,5)))
-
-#|      | Error Rate (%)| Mock with no chimeras| Observed mock|  Soil| Mouse| Human|
-#|:-----|--------------:|---------------------:|-------------:|-----:|-----:|-----:|
-#|V4    |           0.16|                  33.4|          48.7| 630.1| 212.4| 117.0|
-#|V1-V3 |           0.07|                  20.5|          27.7| 726.3| 107.5| 105.4|
-#|V3-V5 |           0.04|                  21.1|          31.2|    NA| 112.3|  83.7|
-#|V1-V5 |           0.02|                  19.8|          27.2| 694.4|  66.0|  85.3|
-#|V1-V6 |           0.03|                  20.0|          46.4| 693.3|  75.5|  89.2|
-#|V1-V9 |           0.03|                  19.5|          40.3|    NA| 102.7| 117.6|
-
+sobs_data <- read.table(file="data/process/sobs_table.tsv", header=T)
 ```
 
 ***Effects of error rates on OTU assignments.***
@@ -353,28 +307,20 @@ We classified all of the sequence data we generated using the naïve Bayesian cl
 
 
 ```{r}
-getRegionNonRandom <- function(region){
-	file_name <- paste0("data/mothur_pool/", region, ".mock.screen.unique.good.filter.unique.error.summary")
+one_offs <- read.table(file="data/process/non_random_analysis.tsv", header=T)
+percent_one_off <- 100 * prop.table(as.matrix(one_offs), 2)
 
-	error <- read.table(file=file_name, header=T, row.names=1)
-	error.nochim <- error[error$numparents==1,]
-
-	one.off <- error.nochim[error.nochim$mismatches==1,]
-
-	one.off.n <- sum(one.off$weight)
-	one.off.table <- table(one.off$weight)
-	nseqs <- sum(error.nochim$weight)
-	one.off.table
+get_max_one_off <- function(region){
+	max(as.numeric(rownames(one_offs[one_offs[,region]==1,])))
 }
+max_one_off <- sapply(regions, get_max_one_off)
 
-non_random <- lapply(regions, getRegionNonRandom)
-names(non_random) <- regions
 
-percent_one_off <- 100 * sapply(non_random, function(x){x[1]/sum(x)})
+
 ```
 
 ***Sequencing errors are not random.***
-Above, we described that although there was no obvious bias in the substitution or insertion rate, we did observe that guanines and adenines were more likely to be deleted than cytosines or thymidines. This lack of randomness in the error profile suggested that there might be a systematic non-random distribution of the errors across the sequences. This would manifest itself by the creation of duplicate sequences with the same error. We identified all of the mock community sequences that had a 1-nt difference to the true sequence. For these three regions, between `r min(percent_one_off)` and `r max(percent_one_off)` of the sequences with 1-nt errors were only observed once. We found that the frequency of the most abundant 1-nt error paralleled the number of sequences. Surprisingly, the same 1-nt error appeared `r as.numeric(names(non_random$V1V6[length(non_random$V1V6)]))` times in the V1-V6 mock data and another 1-nt error appeared `r as.numeric(names(non_random$V1V9[length(non_random$V1V9)]))` times in the V1-V9 mock data. Contrary to previous reports {Carneiro, 2012 #3458;Koren, 2012 #3459}, these results indicate that reproducible errors occur with the PacBio sequencing platform and that they can be quite abundant. Through the use of the pre-clustering step described above these 1-nt errors would be ameliorated; however, this result indicates that caution should be used when attempting to use fine-scale OTU definitions.
+Above, we described that although there was no obvious bias in the substitution or insertion rate, we did observe that guanines and adenines were more likely to be deleted than cytosines or thymidines. This lack of randomness in the error profile suggested that there might be a systematic non-random distribution of the errors across the sequences. This would manifest itself by the creation of duplicate sequences with the same error. We identified all of the mock community sequences that had a 1-nt difference to the true sequence. For these three regions, between `r paste0(format(round(range(percent_one_off[1,]), digits=1), nsmall=1), collapse=" and ")` of the sequences with 1-nt errors were only observed once. We found that the frequency of the most abundant 1-nt error paralleled the number of sequences. Surprisingly, the same 1-nt error appeared `r max_one_off["V1V6"]` times (`r format(round(percent_one_off[max_one_off["V1V6"], "V1V6"], digits=2), nsmall=2)`%) in the V1-V6 mock data and another 1-nt error appeared `r max_one_off["V1V9"]` times (`r format(round(percent_one_off[max_one_off["V1V9"], "V1V9"], digits=2), nsmall=2)`%) in the V1-V9 mock data. Contrary to previous reports {Carneiro, 2012 #3458;Koren, 2012 #3459}, these results indicate that reproducible errors occur with the PacBio sequencing platform and that they can be quite abundant. Through the use of the pre-clustering step described above these 1-nt errors would be ameliorated; however, this result indicates that caution should be used when attempting to use fine-scale OTU definitions.
 
 
 ## Conclusions
@@ -723,6 +669,22 @@ points(x=gg.sp[,"Mouse"], y=9:14, pch=21, bg="gray")
 points(x=gg.sp[,"Soil"], y=1:6, pch=21, bg="gray")
 
 legend(x=63, y=12, legend=c("RDP (gen.)", "SILVA (gen.)", "greengenes (gen.+sp.)", "greengenes (sp.)"), pch=c(15, 17, 19, 21), col="black", pt.bg=c("black", "black", "black", "gray"), bg="white")
+```
+
+
+#plot one_offs
+```{r}
+one_offs <- read.table(file="data/process/non_random_analysis.tsv", header=T)
+
+regions <- c("V1V3", "V1V5", "V1V6", "V1V9", "V3V5", "V4")
+
+z <- prop.table(as.matrix(one_offs), 2)[1:10,]
+plot(NA, xlim=c(1,10), ylim=c(0,1), xlab="", ylab="", axes=F)
+for(r in regions){
+	points(1:10, z[,r], type="l")
+}
+axis(1, at=1:10, label=1:10)
+axis(2)
 ```
 
 

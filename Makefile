@@ -503,6 +503,7 @@ Schloss_PacBio16S_PeerJ_2016.md : \
 						data/process/error_summary.tsv\
 						data/process/taxonomy_depth_analysis.tsv\
 						data/process/sobs_table.tsv\
+						data/process/non_random_analysis.tsv\
 						\
 						peerj.csl\
 						references.bib\
