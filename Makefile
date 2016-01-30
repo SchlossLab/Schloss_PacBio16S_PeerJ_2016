@@ -494,6 +494,10 @@ data/process/taxonomy_depth_analysis.tsv : $$(filter data/mothur_pool/V%, $$(RDP
 
 
 Schloss_PacBio16S_PeerJ_2016.md : \
+						data/process/error_profile.json\
+						data/process/error_summary.tsv\
+						data/process/taxonomy_depth_analysis.tsv\
+						\
 						peerj.csl\
 						references.bib\
 						Schloss_PacBio16S_PeerJ_2016.Rmd
