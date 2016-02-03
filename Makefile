@@ -498,8 +498,13 @@ data/process/non_random_analysis.tsv : code/get_one_off_table.R\
 
 
 results/figures/figure_1.pdf : code/build_figure1.R\
-				data/process/error_summary.tsv
+				data/process/mock.error.report
 	R -e "source('code/build_figure1.R')"
+
+
+results/figures/figure_2.pdf : code/build_figure2.R\
+				data/process/error_summary.tsv
+	R -e "source('code/build_figure2.R')"
 
 
 Schloss_PacBio16S_PeerJ_2016.md : \
