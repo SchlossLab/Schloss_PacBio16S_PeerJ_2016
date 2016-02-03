@@ -1,5 +1,6 @@
 REFS = data/references
 FIGS = results/figures
+TABLE = results/tables
 PROC = data/process
 
 # utility function to print various variables. For example, running the
@@ -515,7 +516,7 @@ $(FIGS)/figure_3.pdf : code/build_figure3.R\
 
 $(FIGS)/figure_4.pdf : code/build_figure4.R\
 				$(PROC)/non_random_analysis.tsv
-	R -e "source('code/build_figure3.R')"
+	R -e "source('code/build_figure4.R')"
 
 $(TABLE)/table_1.pdf : $(TABLE)/build_table1.Rmd\
 				$(REFS)/pacbio.oligos\
@@ -524,7 +525,7 @@ $(TABLE)/table_1.pdf : $(TABLE)/build_table1.Rmd\
 
 
 submission/figures_table_packet.pdf : $(TABLE)/table_1.pdf $(FIGS)/figure_1.pdf $(FIGS)/figure_3.pdf $(FIGS)/figure_3.pdf $(FIGS)/figure_4.pdf
-	gs -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -sOutputFile=$@ $<
+	gs -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -sOutputFile=$@ $^
 
 
 submission/Schloss_PacBio16S_PeerJ_2016.md : \
