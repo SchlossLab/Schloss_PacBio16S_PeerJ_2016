@@ -505,7 +505,6 @@ $(FIGS)/figure_1.pdf : code/build_figure1.R\
 				$(PROC)/mock.error.report
 	R -e "source('code/build_figure1.R')"
 
-
 $(FIGS)/figure_2.pdf : code/build_figure2.R\
 				$(PROC)/error_summary.tsv
 	R -e "source('code/build_figure2.R')"
@@ -514,28 +513,32 @@ $(FIGS)/figure_3.pdf : code/build_figure3.R\
 				$(PROC)/taxonomy_depth_analysis.tsv
 	R -e "source('code/build_figure3.R')"
 
-FIGURES : $(FIGS)/figure_1.pdf $(FIGS)/figure_2.pdf\
-			$(FIGS)/figure_3.pdf
+$(FIGS)/figure_4.pdf : code/build_figure4.R\
+				$(PROC)/non_random_analysis.tsv
+	R -e "source('code/build_figure3.R')"
+
+submission/figure_packet.pdf : $(FIGS)/figure_1.pdf $(FIGS)/figure_3.pdf $(FIGS)/figure_3.pdf $(FIGS)/figure_4.pdf
+	gs -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -sOutputFile=$@ $<
 
 
-Schloss_PacBio16S_PeerJ_2016.md : \
+submission/Schloss_PacBio16S_PeerJ_2016.md : \
 						$(PROC)/error_profile.json\
 						$(PROC)/error_summary.tsv\
 						$(PROC)/taxonomy_depth_analysis.tsv\
 						$(PROC)/sobs_table.tsv\
 						$(PROC)/non_random_analysis.tsv\
-						FIGURES\
+						submission/figure_packet.pdf\
 						\
 						peerj.csl\
 						references.bib\
 						Schloss_PacBio16S_PeerJ_2016.Rmd
 	R -e 'render("Schloss_PacBio16S_PeerJ_2016.Rmd", clean=FALSE)'
-	mv Schloss_PacBio16S_PeerJ_2016.knit.md Schloss_PacBio16S_PeerJ_2016.md
+	mv Schloss_PacBio16S_PeerJ_2016.knit.md $@
 	rm Schloss_PacBio16S_PeerJ_2016.utf8.md
 	mv Schloss_PacBio16S_PeerJ_2016.pdf submission/Schloss_PacBio16S_PeerJ_2016.pdf
 
 submission/Schloss_PacBio16S_PeerJ_2016.pdf : Schloss_PacBio16S_PeerJ_2016.md
 
 
-write.paper :	Schloss_PacBio16S_PeerJ_2016.md\
-		submission/Schloss_PacBio16S_PeerJ_2016.pdf
+write.paper :	submission/Schloss_PacBio16S_PeerJ_2016.md\
+				submission/Schloss_PacBio16S_PeerJ_2016.pdf
