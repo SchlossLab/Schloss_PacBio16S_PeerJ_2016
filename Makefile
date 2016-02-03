@@ -497,6 +497,10 @@ data/process/non_random_analysis.tsv : code/get_one_off_table.R\
 	R -e "source('code/get_one_off_table.R')"
 
 
+results/figures/figure_1.pdf : code/build_figure1.R\
+				data/process/error_summary.tsv
+	R -e "source('code/build_figure1.R')"
+
 
 Schloss_PacBio16S_PeerJ_2016.md : \
 						data/process/error_profile.json\

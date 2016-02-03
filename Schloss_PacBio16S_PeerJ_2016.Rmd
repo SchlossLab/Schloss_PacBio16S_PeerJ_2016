@@ -271,7 +271,7 @@ error_profile <- fromJSON(scan("data/process/error_profile.json", quiet=T, what=
 ```
 
 ***The PacBio error profile and a basic sequence curation procedure.***
-To build a sequence curation pipeline, we first needed to characterize the error rate associated with sequencing the 16S rRNA gene. We observed an average sequencing error rate of `r format(error_profile$overall_error, digits=2, nsmall=2)`%. Insertions, deletions, and substitutions accounted for `r format(error_profile$ins_rate, digits=3, nsmall=1)`, `r format(error_profile$del_rate, digits=3, nsmall=1)`, and `r format(error_profile$subs_rate, digits=3, nsmall=1)`% of the errors, respectively. The substitution errors were equally likely and all four bases were equally likely to cause insertion errors. Interestingly, guanines (`r format(error_profile$del_bias$dG, digits=3, nsmall=1)`%) and adenines (`r format(error_profile$del_bias$dA, digits=3, nsmall=1)`%) were more likely to be deleted than cytosines (`r error_profile$del_bias$dC, digits=3, nsmall=1)`%) or thymidines (`r error_profile$del_bias$dT, digits=2, nsmall=1)`%). The PacBio quality values varied between `r paste(error_profile$qual_range, collapse=' and ')`. Surprisingly, the percentage of base calls that had the maximum quality value did not vary among correct base calls (`r format(error_profile$percent_over_93$m, digits=3, nsmall=1)`%), substitutions (`r format(error_profile$percent_over_93$s, digits=3, nsmall=1)`%), and insertions (`r format(error_profile$percent_over_93$i, digits=3, nsmall=1)`%). Although the individual base quality scores could not be used to screen sequence quality, we observed a strong correlation between our observed error rate and the predicted error rate as calculated by the PacBio software (Pearson's R: `r format(error_profile$qual_error_corr, digits=2, nsmall=2)`; Figure 1A).
+To build a sequence curation pipeline, we first needed to characterize the error rate associated with sequencing the 16S rRNA gene. We observed an average sequencing error rate of `r format(error_profile$overall_error, digits=2, nsmall=2)`%. Insertions, deletions, and substitutions accounted for `r format(error_profile$ins_rate, digits=3, nsmall=1)`, `r format(error_profile$del_rate, digits=3, nsmall=1)`, and `r format(error_profile$subs_rate, digits=3, nsmall=1)`% of the errors, respectively. The substitution errors were equally likely and all four bases were equally likely to cause insertion errors. Interestingly, guanines (`r format(error_profile$del_bias$dG, digits=3, nsmall=1)`%) and adenines (`r format(error_profile$del_bias$dA, digits=3, nsmall=1)`%) were more likely to be deleted than cytosines (`r error_profile$del_bias$dC, digits=3, nsmall=1)`%) or thymidines (`r error_profile$del_bias$dT, digits=2, nsmall=1)`%). The PacBio quality values varied between `r paste(error_profile$qual_range, collapse=' and ')`. Surprisingly, the percentage of base calls that had the maximum quality value did not vary among correct base calls (`r format(error_profile$percent_over_93$m, digits=3, nsmall=1)`%), substitutions (`r format(error_profile$percent_over_93$s, digits=3, nsmall=1)`%), and insertions (`r format(error_profile$percent_over_93$i, digits=3, nsmall=1)`%). Although the individual base quality scores could not be used to screen sequence quality, we observed a strong correlation between our observed error rate and the predicted error rate as calculated by the PacBio software (Pearson's R: `r format(error_profile$pred_error_corr, digits=2, nsmall=2)`; Figure 1A).
 
 ```{r basic}
 error_summary <- read.table(file="data/process/error_summary.tsv", header=T)
@@ -416,12 +416,10 @@ knitr::kable(reasons.lost, digits=1, row.names=TRUE,
 
 ## Figures
 
-[revise - Fig 1A plot predicted error rate vs observed error rate]
 **Figure 1. Summary of errors in data generated using PacBio sequencing platform
-to sequence various regions within the 16S rRNA gene.** Quality scores varied
-with error types (A). The sequencing error rate of the amplified gene fragments
+to sequence various regions within the 16S rRNA gene.** The predicted error rate using PacBio's sequence analysis algorithm correlated well with the observed error rate (Pearson's R: `r format(error_profile$pred_error_corr, digits=2, nsmall=2)`; A). Because of the large number of sequences, we randomly selected 5% of the data to show in panel A. The sequencing error rate of the amplified gene fragments
 increased with mismatches to the barcodes and primers (B). The sequencing error
-rate declined with increasd sequencing coverage; however, increasing the
+rate declined with increased sequencing coverage; however, increasing the
 sequencing depth beyond 10-fold coverage had no meaningful effect on the
 sequencing error rate (C).
 
@@ -439,88 +437,6 @@ SILVA, or greengenes databases for the four types of samples that were sequenced
 across the six regions from the 16S rRNA gene. Only the greengenes taxonomy
 reference provided species-level information.
 
-
-
-
-### Figure 1
-```{r Figure_1, fig.width=6.5, fig.height=3.0}
-layout(matrix(c(1,2,3), nrow=1), heights=1, widths=c(0.75,1,1))
-
-
-#Panel A depicting range of quality scores for different errors
-par(mar=c(6, 5, 0.5, 0.5))
-plot(1, xlim=c(0.5, 4.5), ylim=c(0,75), type="n", yaxt="n", xaxt="n", xlab="", ylab="")
-polygon(x=c(0.75, 1.25, 1.25, 0.75), y=c(m.quant["25%"], m.quant["25%"],
-											 m.quant["75%"], m.quant["75%"]))
-polygon(x=c(1.75, 2.25, 2.25, 1.75), y=c(s.quant["25%"], s.quant["25%"],
-											 s.quant["75%"], s.quant["75%"]))
-polygon(x=c(2.75, 3.25, 3.25, 2.75), y=c(i.quant["25%"], i.quant["25%"],
-											 i.quant["75%"], i.quant["75%"]))
-polygon(x=c(3.75, 4.25, 4.25, 3.75), y=c(a.quant["25%"], a.quant["25%"],
-											 a.quant["75%"], a.quant["75%"]))
-
-segments(x0=seq(0.75, 3.75, 1), x1=seq(1.25,4.25,1), y0=c(m.quant["50%"],
-											s.quant["50%"], i.quant["50%"], a.quant["50%"]), lwd=4)
-
-arrows(x0=1:4, y0=c(m.quant["75%"], s.quant["75%"], i.quant["75%"],
-					a.quant["75%"]), y1=c(m.quant["97.5%"], s.quant["97.5%"],
-					i.quant["97.5%"], a.quant["97.5%"]), angle=90, length=0.05)
-
-arrows(x0=1:4, y0=c(m.quant["25%"], s.quant["25%"], i.quant["25%"],
-					a.quant["25%"]), y1=c(m.quant["2.5%"], s.quant["2.5%"],
-					i.quant["2.5%"], a.quant["2.5%"]), angle=90, length=0.05)
-
-axis(1, at=c(1,2,3,4), label=c("Matches", "Substitutions", "Insertions", "Ambiguous"), las=2, cex.axis=1)
-axis(2, las=2, at=c(0,25,50,75), cex.axis=1.5)
-title(ylab="Quality score", cex.lab=1.5)
-mtext(side=2, line=2.5, at=75, text="A", cex=2, font=2, las=2)
-
-
-#Panel B depicting relationship between errors in barcodes/primers and the
-#rest of the sequence.
-par(mar=c(5,5,0.5,0.5))
-plot(err.bcprimer$x[1:6,1]~err.bcprimer$Group.1[1:6], pch=19,
-		 ylab="Error rate (%)", xlab="", axes=F, ylim=c(0,5), cex.lab=1.5)
-mtext(side=1, line=3.75, text="Total mismatches to\nbarcodes and primers",
-			cex=0.9)
-axis(1, cex.axis=1.5)
-axis(2, las=2, cex.axis=1.5)
-box()
-mtext(side=2, line=2.5, at=5, text="B", cex=2, font=2, las=2)
-
-
-#Panel C depicting relationship between sequencing coverage and error rate for
-#the different regions that were sequence
-plotLines <- function(folder){
-	composite <- read.table(file=paste("pipeline_dev/", folder, "/", folder,
-								 ".composite", sep=""), header=T,row.names=1)
-
-	composite <- composite[composite$reason=="g",]
-	error.by.depth <- aggregate(composite$error, by=list(composite$freq),
-						function(x){c(mean=mean(x), quantile(x, prob=c(0.025, 0.975)), n=length(x))})
-
-	#exclude any coverage values where we don't have at least 50 observations
-	error.by.depth <- error.by.depth[error.by.depth$x[,"n"]>=50,]
-	fold.coverage <- error.by.depth[, "Group.1"]
-	error.by.depth <- error.by.depth$x
-
-	mean <- error.by.depth[,"mean"]
-	points(mean~fold.coverage, type="l", lwd=2, col=clrs[folder])
-}
-
-par(mar=c(5,2,0.5, 0.5))
-plot(1, xlim=c(2,30), ylim=c(0,0.05), type="n", xlab="", ylab="", axes=F)
-axis(2, at=seq(0,0.05, 0.01), label=FALSE, tick=T, las=2)
-#axis(2, at=seq(0,0.05, 0.01), label=seq(0,5, 1), las=2)
-axis(1, cex.axis=1.5)
-lapply(regions, plotLines)
-legend(x=18, y=0.05, legend=pretty_region[regions], lty=1, lwd=2, col=clrs[regions])
-mtext(side=2, line=0.5, at=0.05, text="C", cex=2, font=2, las=2)
-title(xlab="Coverage", ylab="", cex.lab=1.5)
-box()
-
-layout(1)
-```
 
 
 

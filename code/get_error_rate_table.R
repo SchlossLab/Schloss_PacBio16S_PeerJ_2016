@@ -65,19 +65,6 @@ pb_nseqs_reduction_1 <- 100 * (1 - pb_nseqs["1",]/basic_rates["nseqs",])
 
 #coverage_analysis - need to get the error rate for coverage values between 3 and 40 for each region
 
-#error_by_coverage <- function(region){
-#	coverage_region <- mock_error_basic[mock_error_basic$region == region,]
-#	coverage_error_agg <- aggregate(100 * coverage_region$error, by=list(coverage_region$coverage), mean)
-#
-#	coverage_error <- rep(NA, max(mock_error_basic$coverage))
-#	coverage_error[coverage_error_agg$Group.1] <- coverage_error_agg[,"x"]
-#	coverage_error
-#}
-#
-#coverage_error <- sapply(regions, error_by_coverage)
-#seems to plateau right around 10
-
-
 error_at_below_coverage_cutoff <- function(region, cutoff=10){
 	region_data <- mock_error_basic[mock_error_basic$region == region,]
 	deep <- region_data$coverage >= cutoff
