@@ -1,11 +1,14 @@
+REFS = data/references
+FIGS = results/figures
+PROC = data/process
+
 # utility function to print various variables. For example, running the
 # following at the command line:
 #
 #	make print-BAM
 #
 # will generate:
-#	BAM=data/raw_june/V1V3_0001.bam data/raw_june/V1V3_0002.bam data/raw_june/V1V3_0003.bam data/raw_june/V1V3_0004.bam data/raw_june/V1V3_0005.bam data/raw_june/V1V3_0006.bam data/raw_june/V1V5_0001.bam data/raw_june/V1V5_0002.bam data/raw_june/V1V5_0003.bam data/raw_june/V1V5_0004.bam data/raw_june/V1V5_0005.bam data/raw_june/V1V5_0006.bam data/raw_june/V1V6_0001.bam data/raw_june/V1V6_0002.bam data/raw_june/V1V6_0003.bam data/raw_june/V1V6_0004.bam data/raw_june/V1V6_0005.bam data/raw_june/V1V9_0001.bam data/raw_june/V1V9_0002.bam data/raw_june/V1V9_0003.bam data/raw_june/V1V9_0004.bam data/raw_june/V3V5_0001.bam data/raw_june/V3V5_0002.bam data/raw_june/V3V5_0003.bam data/raw_june/V3V5_0004.bam data/raw_june/V3V5_0005.bam data/raw_june/V3V5_0006.bam data/raw_june/V4_0001.bam data/raw_june/V4_0002.bam data/raw_june/V4_0003.bam data/raw_june/V4_0004.bam data/raw_june/V4_0005.bam data/raw_october/V1V5_0001.bam data/raw_october/V1V6_0001.bam data/raw_october/V1V9_0001.bam
-
+#	BAM=data/raw_june/V1V3_0001.bam data/raw_june/V1V3_0002.bam ...
 print-%:
 	@echo '$*=$($*)'
 
@@ -21,7 +24,6 @@ print-%:
 #
 ################################################################################
 
-REFS = data/references
 
 
 # We want the latest greatest reference alignment and the SILVA reference
@@ -446,9 +448,9 @@ $(SILVA) : $$(subst nr.wang.taxonomy,fasta,$$@) data/references/silva.nr.fasta d
 
 
 # Let's pool all of the mock report files together and toss the output into the
-# data/process folder
+# $(PROC) folder
 
-data/process/mock.error.report : $(MOCK_REPORT)
+$(PROC)/mock.error.report : $(MOCK_REPORT)
 	$(eval FIRST = $(word 1, $^))
 	head -n 1 $(FIRST) > $@
 	for FILE in $^; do tail -n +2 $$FILE >> $@; done
@@ -457,7 +459,7 @@ data/process/mock.error.report : $(MOCK_REPORT)
 # Let's pool the *.error.quality files into a single file to see whether there are
 # relationships between quality scores and specific error types
 
-data/process/mock.quality.report : $(ERROR_QUALITY)
+$(PROC)/mock.quality.report : $(ERROR_QUALITY)
 	R -e "source('code/pool_error_quality.R'); pool('$^')"
 
 
@@ -469,50 +471,60 @@ data/process/mock.quality.report : $(ERROR_QUALITY)
 
 
 
-data/process/error_profile.json : code/get_error_profile.R \
-								data/process/mock.quality.report\
-								data/process/mock.error.report
+$(PROC)/error_profile.json : code/get_error_profile.R \
+								$(PROC)/mock.quality.report\
+								$(PROC)/mock.error.report
 	R -e "source('code/get_error_profile.R')"
 
 
-data/process/error_summary.tsv : code/get_error_rate_table.R\
-								data/process/mock.error.report\
+$(PROC)/error_summary.tsv : code/get_error_rate_table.R\
+								$(PROC)/mock.error.report\
 								$(PRECLUSTER_ERROR)
 	R -e "source('code/get_error_rate_table.R')"
 
 
-data/process/sobs_table.tsv : code/get_sobs_table.R\
+$(PROC)/sobs_table.tsv : code/get_sobs_table.R\
 							$(UCHIME_SOBS)\
 							$(NOCHIM_SOBS)\
 							$(NOERROR_SOBS)
 	R -e "source('code/get_sobs_table.R')"
 
 
-data/process/taxonomy_depth_analysis.tsv : $$(filter data/mothur_pool/V%, $$(RDP) $$(GG) $$(SILVA)) code/consolidate_taxonomy.R
+$(PROC)/taxonomy_depth_analysis.tsv : $$(filter data/mothur_pool/V%, $$(RDP) $$(GG) $$(SILVA)) code/consolidate_taxonomy.R
 	R -e "source('code/consolidate_taxonomy.R')"
 
 
-data/process/non_random_analysis.tsv : code/get_one_off_table.R\
-							$(UNIQUE_ERROR)
+$(PROC)/non_random_analysis.tsv : code/get_one_off_table.R\
+				$(UNIQUE_ERROR)
 	R -e "source('code/get_one_off_table.R')"
 
 
-results/figures/figure_1.pdf : code/build_figure1.R\
-				data/process/mock.error.report
+
+
+$(FIGS)/figure_1.pdf : code/build_figure1.R\
+				$(PROC)/mock.error.report
 	R -e "source('code/build_figure1.R')"
 
 
-results/figures/figure_2.pdf : code/build_figure2.R\
-				data/process/error_summary.tsv
+$(FIGS)/figure_2.pdf : code/build_figure2.R\
+				$(PROC)/error_summary.tsv
 	R -e "source('code/build_figure2.R')"
+
+$(FIGS)/figure_3.pdf : code/build_figure3.R\
+				$(PROC)/taxonomy_depth_analysis.tsv
+	R -e "source('code/build_figure3.R')"
+
+FIGURES : $(FIGS)/figure_1.pdf $(FIGS)/figure_2.pdf\
+			$(FIGS)/figure_3.pdf
 
 
 Schloss_PacBio16S_PeerJ_2016.md : \
-						data/process/error_profile.json\
-						data/process/error_summary.tsv\
-						data/process/taxonomy_depth_analysis.tsv\
-						data/process/sobs_table.tsv\
-						data/process/non_random_analysis.tsv\
+						$(PROC)/error_profile.json\
+						$(PROC)/error_summary.tsv\
+						$(PROC)/taxonomy_depth_analysis.tsv\
+						$(PROC)/sobs_table.tsv\
+						$(PROC)/non_random_analysis.tsv\
+						FIGURES\
 						\
 						peerj.csl\
 						references.bib\
