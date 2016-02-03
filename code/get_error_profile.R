@@ -89,7 +89,7 @@ json <- toJSON(
 		ins_bias=insertion_bias,
 		percent_over_93 = c(m=m_93, s=s_93, i=i_93),
 		qual_range = range(matches, subs, ins),
-		qual_error_corr = cor(mock_error_good$error, mock_error_good$pred_error)
+		pred_error_corr = cor(mock_error_good$error, mock_error_good$pred_error)
 	)
 )
 
