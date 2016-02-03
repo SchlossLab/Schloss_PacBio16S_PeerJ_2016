@@ -1,0 +1,95 @@
+---
+output:
+  pdf_document:
+    includes:
+      in_header: table_header.tex
+tables: true
+geometry: margin=1.0in
+---
+
+\captionsetup{labelformat=empty}
+
+```{r table1, results='asis', echo=FALSE, warning=FALSE, eval=TRUE}
+require(xtable, quietly=TRUE)
+options(xtable.sanitize.text.function=identity)
+options(xtable.sanitize.colnames.function=identity)
+
+pretty_region <- c("V4"="V4", "V1V3"="V1-V3", "V3V5"="V3-V5", "V1V5"="V1-V5", "V1V6"="V1-V6", "V1V9"="V1-V9")
+regions <- names(pretty_region)
+
+mock_error <- read.table(file="data/process/mock.error.report")
+mock_error_nochim <- mock_error[mock_error$numparents==1,]
+mock_error_good <- mock_error_nochim[mock_error_nochim$error <= 0.1,]
+n_seqs <- aggregate(mock_error_good$error, by=list(mock_error_good$region), length)
+rownames(n_seqs) <- n_seqs$Group.1
+n_seqs <- n_seqs[regions,]
+
+
+
+getSloppyRevComp <- function(sequence){
+	rev.sequence <- paste(rev(unlist(strsplit(sequence, ""))), collapse="")
+	revcomp.sequence <- chartr("ATGCRYSWKMBDHVN", "TACG...........", rev.sequence)
+	return(revcomp.sequence)
+}
+
+getPos <- function(primer, sequence=ecoli, forward=TRUE){
+	if(forward==FALSE){
+		primer <- getSloppyRevComp(primer)
+	}
+	primer <- gsub("[^ATGC]", ".", primer)
+
+	pos <- regexpr(primer, sequence)
+
+	if(forward==FALSE){
+		pos <- pos + nchar(primer) -1
+	}
+	return(pos)
+
+}
+
+#taken from... http://www.ncbi.nlm.nih.gov/nuccore/NC_022648.1?report=fasta&from=4564120&to=4565661
+ecoli <- "AAATTGAAGAGTTTGATCATGGCTCAGATTGAACGCTGGCGGCAGGCCTAACACATGCAAGTCGAACGGTAACAGGAAGCAGCTTGCTGCTTTGCTGACGAGTGGCGGACGGGTGAGTAATGTCTGGGAAACTGCCTGATGGAGGGGGATAACTACTGGAAACGGTAGCTAATACCGCATAACGTCGCAAGACCAAAGAGGGGGACCTTCGGGCCTCTTGCCATCGGATGTGCCCAGATGGGATTAGCTAGTAGGTGGGGTAACGGCTCACCTAGGCGACGATCCCTAGCTGGTCTGAGAGGATGACCAGCCACACTGGAACTGAGACACGGTCCAGACTCCTACGGGAGGCAGCAGTGGGGAATATTGCACAATGGGCGCAAGCCTGATGCAGCCATGCCGCGTGTATGAAGAAGGCCTTCGGGTTGTAAAGTACTTTCAGCGGGGAGGAAGGGAGTAAAGTTAATACCTTTGCTCATTGACGTTACCCGCAGAAGAAGCACCGGCTAACTCCGTGCCAGCAGCCGCGGTAATACGGAGGGTGCAAGCGTTAATCGGAATTACTGGGCGTAAAGCGCACGCAGGCGGTTTGTTAAGTCAGATGTGAAATCCCCGGGCTCAACCTGGGAACTGCATCTGATACTGGCAAGCTTGAGTCTCGTAGAGGGGGGTAGAATTCCAGGTGTAGCGGTGAAATGCGTAGAGATCTGGAGGAATACCGGTGGCGAAGGCGGCCCCCTGGACGAAGACTGACGCTCAGGTGCGAAAGCGTGGGGAGCAAACAGGATTAGATACCCTGGTAGTCCACGCCGTAAACGATGTCGACTTGGAGGTTGTGCCCTTGAGGCGTGGCTTCCGGAGCTAACGCGTTAAGTCGACCGCCTGGGGAGTACGGCCGCAAGGTTAAAACTCAAATGAATTGACGGGGGCCCGCACAAGCGGTGGAGCATGTGGTTTAATTCGATGCAACGCGAAGAACCTTACCTGGTCTTGACATCCACGGAAGTTTTCAGAGATGAGAATGTGCCTTCGGGAACCGTGAGACAGGTGCTGCATGGCTGTCGTCAGCTCGTGTTGTGAAATGTTGGGTTAAGTCCCGCAACGAGCGCAACCCTTATCCTTTGTTGCCAGCGGTCCGGCCGGGAACTCAAAGGAGACTGCCAGTGATAAACTGGAGGAAGGTGGGGATGACGTCAAGTCATCATGGCCCTTACGACCAGGGCTACACACGTGCTACAATGGCGCATACAAAGAGAAGCGACCTCGCGAGAGCAAGCGGACCTCATAAAGTGCGTCGTAGTCCGGATTGGAGTCTGCAACTCGACTCCATGAAGTCGGAATCGCTAGTAATCGTGGATCAGAATGCCACGGTGAATACGTTCCCGGGCCTTGTACACACCGCCCGTCACACCATGGGAGTGGGTTGCAAAAGAAGTAGGTAGCTTAACCTTCGGGAGGGCGCTTACCACTTTGTGATTCATGACTGGGGTGAAGTCGTAACAAGGTAACCGTAGGGGAACCTGCGGTTGGATCACCTCCTTA"
+
+
+
+oligos <- read.table(file="data/references/pacbio.oligos", stringsAsFactors=F)[1:6,]
+rownames(oligos) <- oligos$V4
+oligos <- oligos[,c("V2", "V3")]
+colnames(oligos) <- c("forward", "reverse")
+oligos <- oligos[regions,]
+
+start <- sapply(oligos[,1], getPos)
+end <- sapply(oligos[,2], getPos, forward=FALSE)
+
+
+coordinates <- paste(start, end, sep="-")
+length <- end - start - nchar(oligos[,1]) - nchar(oligos[,2]) + 1
+composite <- cbind(region = pretty_region, oligos, coorinates=coordinates, length=format(length, digits=0), nseqs=format(n_seqs$x, big.mark=','))
+
+header <- c("Region", "\\bigcell{c}{ Forward }", "\\bigcell{c}{ Reverse }", "\\bigcell{c}{\\textit{E. coli} \\\\ Coordinates}", "\\bigcell{c}{Amplicon \\\\ Length}", "\\bigcell{c}{Sequences \\\\ (N)}")
+
+header <- paste0("\\textbf{", header, "}")
+
+addtorow <- list(pos=list(0),
+                command=paste0(paste(header, collapse=" & "), "\\\\"))
+
+
+composite <- xtable(composite)
+
+caption <- "\\textbf{Table 1. Summary of the primer pairs used to generate the 16S rRNA gene fragment fragments and the characteristics of each region.}"
+
+composite <- xtable(composite, caption = caption, label="")
+
+align(composite) <- "ccllccc"
+
+print(composite,
+    add.to.row=addtorow,
+	include.rownames=FALSE,
+	include.colnames=FALSE,
+	hline.after = c(-1, 0, nrow(composite)),
+    comment=FALSE,
+    caption.placement = "top",
+    table.placement="!ht",
+	size="small"
+)
+```
