@@ -524,7 +524,7 @@ $(TABLE)/table_1.pdf : $(TABLE)/build_table1.Rmd\
 	R -e 'library(rmarkdown); render("results/tables/build_table1.Rmd", output_file="table_1.pdf")'
 
 
-submission/figures_table_packet.pdf : $(TABLE)/table_1.pdf $(FIGS)/figure_2.pdf $(FIGS)/figure_3.pdf $(FIGS)/figure_3.pdf $(FIGS)/figure_4.pdf
+submission/figures_table_packet.pdf : $(TABLE)/table_1.pdf $(FIGS)/figure_1.pdf $(FIGS)/figure_2.pdf $(FIGS)/figure_3.pdf $(FIGS)/figure_4.pdf
 	gs -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -sOutputFile=$@ $^
 
 
