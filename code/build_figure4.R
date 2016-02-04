@@ -8,7 +8,7 @@ names(clrs) <- regions
 one_offs <- read.table(file="data/process/non_random_analysis.tsv", header=T)
 z <- prop.table(as.matrix(one_offs), 2)[1:10,]
 
-pdf(file="results/figures/figure_4.pdf", width=4, height=4)
+pdf(file="submission/figure_4.pdf", width=4, height=4)
 par(mar=c(4,4,0.5,0.5))
 plot(NA, xlim=c(1,10), ylim=c(0,1), xlab="Number of times 1-nt\nvariants were observed", ylab="Percentage of 1-nt variants", axes=F)
 for(r in regions){

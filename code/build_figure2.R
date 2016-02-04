@@ -11,7 +11,7 @@ methods <- c("raw", "basic", "pb", "pred", "coverage", "pb_coverage", "pb_pred",
 
 
 
-cairo_pdf(file="results/figures/figure_2.pdf", width=6.5, height=6.0)
+cairo_pdf(file="submission/figure_2.pdf", width=6.5, height=6.0)
 
 l <- layout(matrix(c(1,2,3), nrow=3), heights=c(1,1,0.6))
 

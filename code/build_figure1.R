@@ -15,7 +15,7 @@ mock_error_basic <- mock_error_good[mock_error_good$good_coords & mock_error_goo
 subset <- mock_error_basic[sample(1:nrow(mock_error_good), 0.05*nrow(mock_error_good)),]
 
 
-pdf(file="results/figures/figure_1.pdf", width=6.5, height=3.0)
+pdf(file="submission/figure_1.pdf", width=6.5, height=3.0)
 layout(matrix(c(1,2,3), nrow=1), heights=1, widths=c(1,1,1))
 
 #Panel A depicting relationship between predicted and observed error rates

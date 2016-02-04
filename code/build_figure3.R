@@ -26,7 +26,7 @@ rownames(gg.sp) <- c("V4", "V3-V5", "V1-V3", "V1-V5", "V1-V6", "V1-V9")
 
 
 
-pdf(file="results/figures/figure_3.pdf", width=5, height=7)
+pdf(file="submission/figure_3.pdf", width=5, height=7)
 
 
 par(mar=c(5, 3, 0.5, 0.5))
