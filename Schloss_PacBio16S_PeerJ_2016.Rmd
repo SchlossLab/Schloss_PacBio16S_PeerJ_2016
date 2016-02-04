@@ -97,12 +97,12 @@ sequencing data relative to the other available platforms.
 Advances in sequencing technologies over the past 10 years have introduced
 considerable advances to the field of microbial ecology. Clone-based Sanger
 sequencing of the 16S rRNA gene has largely been replaced by various platforms
-produced by 454/Roche {e.g. Sogin, 2006 #1510}, Illumina
-{e.g. Gloor, 2010 #2611}, and IonTorrent {e.g. Junemann, 2012 #2630}. It was
+produced by 454/Roche (e.g. @Sogin2006), Illumina
+(e.g. @Gloor2010), and IonTorrent (e.g. @Junemann2012). It was
 once common to sequence fewer than 100 16S rRNA gene sequences from several
-samples using the Sanger approach {e.g. McCaig, 1999 #592}. Now it is common to
+samples using the Sanger approach (e.g. @Mccaig1999). Now it is common to
 generate thousands of sequences from each of several hundred samples
-{The Human Microbiome Consortium, 2012 #2617}. The advance in throughput has
+[@HMP2012]. The advance in throughput has
 come at the cost of read length. Sanger sequencing regularly generated 800 nt
 per read and because the DNA was cloned, it was possible to obtain multiple
 reads per fragment to yield a full-length sequence from a representative single
@@ -123,20 +123,19 @@ within the gene that is isolated from many organisms. Because the fragments
 are not cloned, it is not possible to obtain high sequence coverage from the
 same DNA molecule using these platforms. Thus, to reduce sequencing error rates
 it has become imperative to develop stringent sequence curation and denoising
-algorithms {Kozich, 2013 #2719; Schloss, 2011 #2466}. There has been a tradeoff
+algorithms [@Kozich2013; @Schloss2011a]. There has been a tradeoff
 between read length, number of reads per sample, and the error rate. For
 instance, we recently demonstrated that using the Illumina MiSeq and the 454
-Titanium platforms the raw error rate varies between 1 and 2% {Kozich, 2013
-#2719; Schloss, 2011 #2466}. Yet, it was possible to obtain error rates below
+Titanium platforms the raw error rate varies between 1 and 2%
+[@Kozich2013; @Schloss2011a]. Yet, it was possible to obtain error rates below
 0.02% by adopting various denoising algorithms. However, the resulting fragments
 were only 250-nt long. In the case of 454 Titanium, extending the length of the
 fragment introduces length-based errors and in the case of the Illumina MiSeq,
 increasing the length of the fragment reduces the overlap between the read pairs
 reducing the ability of each read to mutually reduce the sequencing error.
 Inadequate denoising of sequencing reads can have many negative effects
-including limited ability to identify chimeras {Haas, 2011 #2404;Edgar, 2011 #2406}
-and inflation of alpha- and beta-diversity metrics
-{Huse, 2010 #2034; Kunin, 2010 #2259; Kozich, 2013 #2719; Schloss, 2011 #2466}.
+including limited ability to identify chimeras [@Haas2011; @Edgar2011]
+and inflation of alpha- and beta-diversity metrics [@Huse2010; @Kunin2010; @Kozich2013; @Schloss2011a].
 Although MiSeq and 454 enjoy widespread use in the field, the MiSeq
 platform is emerging as the leader because of the ability to sequence 15-20
 million fragments that can be distributed across hundreds of samples for less
@@ -152,21 +151,20 @@ and Illumina platforms cannot be reliably classified to the genus or
 species level. Previous investigators have utilized simulations to
 demonstrate that increased read lengths usually increase the accuracy and
 sensitivity of classification against reference databases
-{Liu, 2008 #2188;Werner, 2012 #2474;Wang, 2007 #1809}. There is
-clearly a need to develop sequencing technologies that will allow researchers to
-generate high quality full-length 16S rRNA gene sequences in a high throughput
-manner.
+[@Liu2008; @Werner2011; @Wang2007]. There is clearly a need to develop
+sequencing technologies that will allow researchers to generate high quality
+full-length 16S rRNA gene sequences in a high throughput manner.
 
 New advances in single molecule sequencing technologies, such as the platform
 produced by Pacific Biosciences (PacBio), offer the opportunity to once again
 obtain full-length sequence reads with a high depth of coverage from a large
 number of samples. To this point, the PacBio Single Molecule, Real-Time (SMRT)
 DNA Sequencing System has received limited application in the microbial ecology
-research domain {Mosher, 2014 #3376; Fichot, 2013 #3453; Mosher, 2013 #3454}.
+research domain @Mosher2013; @Mosher2014; @Fichot2013].
 The SMRT system ligates hairpin adapters (i.e. SMRTbells) to the ends of
 double-stranded DNA. Although the DNA molecule is linear, it is effectively
 circularized allowing the sequencing polymerase to process around the molecule
-multiple times {Au, 2012 #3455}. According to Pacific Biosciences the platform
+multiple times [@Au2012]. According to Pacific Biosciences the platform
 is able to generate median read lengths longer than 8 kb with the P4-C2
 chemistry; however, the single pass error rate is approximately 15%. Given the
 circular nature of the DNA fragment, the full read length can be used to cover
@@ -176,11 +174,11 @@ reduced error rate.
 
 Despite the opportunity to potentially generate high-quality full-length
 sequences, the Pacific Biosciences platform has not been widely adopted for
-sequencing 16S rRNA genes {Fichot, 2013 #3453; Mosher, 2014 #3376; Mosher, 2014 #3376}.
+sequencing 16S rRNA genes [@Fichot2013; @Mosher2014; @Mosher2013].
 Previous studies utilizing the technology have removed reads with mismatched
-primers and barcodes, ambiguous base  calls, and low quality scores {Fichot, 2013 #3453}.
+primers and barcodes, ambiguous base  calls, and low quality scores [@Fichot2013].
 Others have utilized the platform without describing the bioinformatic pipeline
-that was utilized {Mosher, 2014 #3376; Mosher, 2014 #3376}. Regardless of the
+that was utilized [@Mosher2014; @Mosher2013]. Regardless of the
 curation methods, the error rates associated with sequencing the 16S rRNA gene
 on the platform have never been reported. In the current study, we assessed the
 quality of data generated by the Pacific Biosciences sequencer and whether it
@@ -197,7 +195,7 @@ isolated from soil and human and mouse feces.
 ## Materials and Methods
 ***Community DNA.*** We utilized genomic DNA isolated from four communities.
 These same DNA extracts were previously used to develop an Illumina MiSeq-based
-sequencing strategy {Kozich, 2013 #2719}.  Briefly, we used a “Mock Community”
+sequencing strategy [@Kozich2013].  Briefly, we used a “Mock Community”
 composed of genomic DNA from 21 bacterial strains: *Acinetobacter baumannii*
 ATCC 17978, *Actinomyces odontolyticus* ATCC 17982, *Bacillus cereus* ATCC
 10987, *Bacteroides vulgatus* ATCC 8482, *Clostridium beijerinckii* ATCC 51743,
@@ -223,15 +221,15 @@ V4, V1-V3, V3-V5, V1-V5, V1-V6, and V1-V9 variable regions (Table 1). The
 primers were synthesized so that the 5’ end of the forward and reverse primers
 were each tagged with a 5-nt barcode sequence to allow multiplexing of samples
 within a single sequencing run. Methods describing PCR, amplicon cleanup, and
-pooling were described previously {Kozich, 2013 #2719}. The SMRTbell adapters
+pooling were described previously [@Kozich2013]. The SMRTbell adapters
 were ligated onto  the PCR products and the libraries were sequenced by Pacific
 Biosciences using the P6-C24 chemistry on a PacBio RS II SMRT DNA Sequencing
 System.
 
 
 ***Data analysis.***  [ Revise ]
-All sequencing data were curated using mothur {Schloss, 2009 #1816} and analyzed
-using the R programming language {R Core Team, 2014 #3456}. The raw data can be
+All sequencing data were curated using mothur [@Schloss2009a] and analyzed
+using the R programming language [@R2016]. The raw data can be
 obtained from the Sequence Read Archive at NCBI under accession SRP051686, which
 are associated with BioProject PRJNA271568. Several specific features were
 incorporated into mothur to facilitate the analysis of PacBio  sequence data.
@@ -250,18 +248,18 @@ community (*in silico* chimeras). If a sequence read was 3 or more nucleotides
 more similar to an *in silico* chimera than it was to a non-chimeric reference
 sequence, it was classified as a chimera and removed from further consideration.
 Identification of *in silico* chimeras and calculation of sequencing error rates
-was performed using the seq.error command in mothur {Schloss, 2011 #2466}. *De
+was performed using the seq.error command in mothur [@Schloss2011a]. *De
 novo* chimera detection was also performed on the mock and other sequence data
-using the abundance-based algorithm implemented in UCHIME {Edgar, 2011 #2406}.
+using the abundance-based algorithm implemented in UCHIME [@Edgar2011].
 Sequences sequences were aligned against a SILVA-based reference alignment
-{Pruesse, 2007 #1735} using a profile-based aligner {Schloss, 2009 #1825} and
-were classified against the SILVA {Pruesse, 2007 #1735}, RDP {Cole, 2014 #3460},
-and greengenes {Werner, 2012 #2474} reference taxonomies  using a naive Bayesian
-classifier {Wang, 2007 #1809}. Sequences were assigned to operational taxonomic
+[@Pruesse2007] using a profile-based aligner [@Schloss2009b] and
+were classified against the SILVA [@Pruesse2007], RDP [@Cole2013],
+and greengenes [@Werner2011] reference taxonomies  using a naive Bayesian
+classifier [@Wang2007]. Sequences were assigned to operational taxonomic
 units using the average neighbor clustering algorithm with a 3% distance
-threshold {Schloss, 2011 #3156}.  Detailed methods including this paper as an R
+threshold [@Schloss2011b].  Detailed methods including this paper as an R
 markdown file are available as a public online repository
-(http://github.com/SchlossLab/ Schloss_PacBio16S_PeerJ_2015).
+(http://github.com/SchlossLab/Schloss_PacBio16S_PeerJ_2016).
 
 
 ## Results and Discussion
@@ -271,7 +269,7 @@ error_profile <- fromJSON(scan("data/process/error_profile.json", quiet=T, what=
 ```
 
 ***The PacBio error profile and a basic sequence curation procedure.***
-To build a sequence curation pipeline, we first needed to characterize the error rate associated with sequencing the 16S rRNA gene. We observed an average sequencing error rate of `r format(error_profile$overall_error, digits=2, nsmall=2)`%. Insertions, deletions, and substitutions accounted for `r format(error_profile$ins_rate, digits=3, nsmall=1)`, `r format(error_profile$del_rate, digits=3, nsmall=1)`, and `r format(error_profile$subs_rate, digits=3, nsmall=1)`% of the errors, respectively. The substitution errors were equally likely and all four bases were equally likely to cause insertion errors. Interestingly, guanines (`r format(error_profile$del_bias$dG, digits=3, nsmall=1)`%) and adenines (`r format(error_profile$del_bias$dA, digits=3, nsmall=1)`%) were more likely to be deleted than cytosines (`r error_profile$del_bias$dC, digits=3, nsmall=1)`%) or thymidines (`r error_profile$del_bias$dT, digits=2, nsmall=1)`%). The PacBio quality values varied between `r paste(error_profile$qual_range, collapse=' and ')`. Surprisingly, the percentage of base calls that had the maximum quality value did not vary among correct base calls (`r format(error_profile$percent_over_93$m, digits=3, nsmall=1)`%), substitutions (`r format(error_profile$percent_over_93$s, digits=3, nsmall=1)`%), and insertions (`r format(error_profile$percent_over_93$i, digits=3, nsmall=1)`%). Although the individual base quality scores could not be used to screen sequence quality, we observed a strong correlation between our observed error rate and the predicted error rate as calculated by the PacBio software (Pearson's R: `r format(error_profile$pred_error_corr, digits=2, nsmall=2)`; Figure 1A).
+To build a sequence curation pipeline, we first needed to characterize the error rate associated with sequencing the 16S rRNA gene. We observed an average sequencing error rate of `r format(error_profile$overall_error, digits=2, nsmall=2)`%. Insertions, deletions, and substitutions accounted for `r format(error_profile$ins_rate, digits=3, nsmall=1)`, `r format(error_profile$del_rate, digits=3, nsmall=1)`, and `r format(error_profile$subs_rate, digits=3, nsmall=1)`% of the errors, respectively. The substitution errors were equally likely and all four bases were equally likely to cause insertion errors. Interestingly, guanines (`r format(error_profile$del_bias$dG, digits=3, nsmall=1)`%) and adenines (`r format(error_profile$del_bias$dA, digits=3, nsmall=1)`%) were more likely to be deleted than cytosines (`r format(error_profile$del_bias$dC, digits=3, nsmall=1)`%) or thymidines (`r format(error_profile$del_bias$dT, digits=2, nsmall=1)`%). The PacBio quality values varied between `r paste(error_profile$qual_range, collapse=' and ')`. Surprisingly, the percentage of base calls that had the maximum quality value did not vary among correct base calls (`r format(error_profile$percent_over_93$m, digits=3, nsmall=1)`%), substitutions (`r format(error_profile$percent_over_93$s, digits=3, nsmall=1)`%), and insertions (`r format(error_profile$percent_over_93$i, digits=3, nsmall=1)`%). Although the individual base quality scores could not be used to screen sequence quality, we observed a strong correlation between our observed error rate and the predicted error rate as calculated by the PacBio software (Pearson's R: `r format(error_profile$pred_error_corr, digits=2, nsmall=2)`; Figure 1A).
 
 ```{r basic}
 error_summary <- read.table(file="data/process/error_summary.tsv", header=T)
@@ -287,15 +285,16 @@ In contrast to the 454 and Illumina-based platforms where the sequencing quality
 
 
 ***Pre-clustering sequences to further reduce sequencing noise.***
-Previously, we implemented a pre-clustering algorithm where sequences were sorted by their abundance in decreasing order and rare sequences are clustered with a more abundant sequence if the rare sequences have fewer mismatches than a defined threshold when compared to the more abundant sequence [@refs]. The recommended threshold was a 1-nt difference per 100-nt of sequence data. For example, the threshold for 250 bp fragment from the V4 region would be 2 nt or 14 for the 1458 bp V1-V9 fragments. This approach removes residual PCR and sequencing errors while not overwhelming the resolution needed to identify OTUs that are based on a 3% distance threshold. The tradeoff of this approach is that one would unable to differentiate V1-V9 sequences that truly differed by less than 14 nt. When we applied this approach to our PacBio data, we observed a reduction in the error rate between `r format(min(error_summary[error_summary$method == "precluster","nseqs_red"]), digits=3, nsmall=1)` (`r pretty_region[which.min(error_summary[error_summary$method == "precluster","nseqs_red"])]`) and `r format(max(error_summary[error_summary$method == "precluster","nseqs_red"]), digits=3, nsmall=1)`% (`r pretty_region[which.max(error_summary[error_summary$method == "precluster","nseqs_red"])]`). The final error rates varied between `r round(min(error_summary[error_summary$method == "precluster","error"]), digits=2)` (`r pretty_region[which.min(error_summary[error_summary$method == "precluster","error"])]`) and `r round(max(error_summary[error_summary$method == "precluster","error"]), digits=2)`% (`r pretty_region[which.max(error_summary[error_summary$method == "precluster","error"])]`). The full-length (i.e. V1-V9) fragments had an error rate of `r round(error_summary[error_summary$method == "precluster" & error_summary$region=="V1V9","error"], digits=2)`% (Figure 2B), this is similar to what we have previously observed using the 454 and Illumina MiSeq platforms (0.02%){Schloss, 2011 #2466; Kozich, 2013 #2719}
+Previously, we implemented a pre-clustering algorithm where sequences were sorted by their abundance in decreasing order and rare sequences are clustered with a more abundant sequence if the rare sequences have fewer mismatches than a defined threshold when compared to the more abundant sequence [@Huse2010; @Schloss2011a]. The recommended threshold was a 1-nt difference per 100-nt of sequence data. For example, the threshold for 250 bp fragment from the V4 region would be 2 nt or 14 for the 1458 bp V1-V9 fragments. This approach removes residual PCR and sequencing errors while not overwhelming the resolution needed to identify OTUs that are based on a 3% distance threshold. The tradeoff of this approach is that one would unable to differentiate V1-V9 sequences that truly differed by less than 14 nt. When we applied this approach to our PacBio data, we observed a reduction in the error rate between `r format(min(error_summary[error_summary$method == "precluster","nseqs_red"]), digits=3, nsmall=1)` (`r pretty_region[which.min(error_summary[error_summary$method == "precluster","nseqs_red"])]`) and `r format(max(error_summary[error_summary$method == "precluster","nseqs_red"]), digits=3, nsmall=1)`% (`r pretty_region[which.max(error_summary[error_summary$method == "precluster","nseqs_red"])]`). The final error rates varied between `r round(min(error_summary[error_summary$method == "precluster","error"]), digits=2)` (`r pretty_region[which.min(error_summary[error_summary$method == "precluster","error"])]`) and `r round(max(error_summary[error_summary$method == "precluster","error"]), digits=2)`% (`r pretty_region[which.max(error_summary[error_summary$method == "precluster","error"])]`). The full-length (i.e. V1-V9) fragments had an error rate of `r round(error_summary[error_summary$method == "precluster" & error_summary$region=="V1V9","error"], digits=2)`% (Figure 2B), this is similar to what we have previously observed using the 454 and Illumina MiSeq platforms (0.02%)[@Schloss2011a; @Kozich2013].
 
 
 ```{r}
 sobs_data <- read.table(file="data/process/sobs_table.tsv", header=T)
+perfect_otu <- 19
 ```
 
 ***Effects of error rates on OTU assignments.***
-The sequencing error rate is known to affect the number of OTUs that are observed {Schloss, 2011 #2466}. For each region, we determined that if there were no chimeras or PCR or sequencing errors, then we would expect to find `r perfect.otu[[1]]` OTUs. When achieved perfect chimera removal, but allowed for PCR and sequencing errors, we observed between `r diff<-otu.table[,2]-perfect.otu; round(min(diff), digits=1)` (`r names(which.min(diff))`) and `r round(max(diff), digits=1)` (`r names(which.max(diff))`) extra OTUs. The range in the number of extra OTUs was largely explained by the sequencing error rate (Pearson's R=`r round(cor.test(diff, pooled_error[,"precluster"])$estimate, 2)`). Next, we determined the number of OTUs that were observed when we used UCHIME to identify chimeric sequence. Under these more realistic conditions, we observed between `r diff<-otu.table[,3]-perfect.otu; round(min(diff), digits=1)` (`r names(which.min(diff))`) and `r round(max(diff), digits=1)` (`r names(which.max(diff))`) extra OTUs. Finally, we calculated the number of OTUs in the soil, mouse, and human samples using the same pipeline with chimera detection and removal based on the UCHIME algorithm. Surpisingly, there was not a clear relationship across sample type and region. Again, we found that there was a strong correlation between the number of observed OTUs and the error rate for the mouse (R=`r format(round(cor.test(otu.table[,"Mouse"], pooled_error[,"precluster"])$estimate, 2), nsmall=2)`) and human samples (R=`r format(round(cor.test(otu.table[,"Human"], pooled_error[,"precluster"])$estimate, 2), nsmall=2)`). These results underscore the effect of sequencing error on the inflation of the number of observed OTUs.
+The sequencing error rate is known to affect the number of OTUs that are observed [Schloss2011a]. For each region, we determined that if there were no chimeras or PCR or sequencing errors, then we would expect to find `r perfect_otu` OTUs. When achieved perfect chimera removal, but allowed for PCR and sequencing errors, we observed between `r diff<-sobs_data[,2]-perfect_otu; round(min(diff), digits=1)` (`r pretty_region[rownames(sobs_data[which.min(diff),])]`) and `r round(max(diff), digits=1)` (`r pretty_region[rownames(sobs_data[which.max(diff),])]`) extra OTUs. The range in the number of extra OTUs was largely explained by the sequencing error rate (Pearson's R=`r round(cor.test(diff, error_summary[error_summary$method=="precluster", "error"])$estimate, 2)`). Next, we determined the number of OTUs that were observed when we used UCHIME to identify chimeric sequence. Under these more realistic conditions, we observed between `r diff<-sobs_data[,3]-perfect_otu; round(min(diff), digits=1)` (`r pretty_region[rownames(sobs_data[which.min(diff),])]`) and `r round(max(diff), digits=1)` (`r pretty_region[rownames(sobs_data[which.max(diff),])]`) extra OTUs. Finally, we calculated the number of OTUs in the soil, mouse, and human samples using the same pipeline with chimera detection and removal based on the UCHIME algorithm. Surprisingly, there was not a clear relationship across sample type and region. Again, we found that there was a strong correlation between the number of observed OTUs and the error rate for the mouse (R=`r format(round(cor.test(sobs_data[,"mouse"], error_summary[error_summary$method=="precluster", "error"])$estimate, 2), nsmall=2)`) and human samples (R=`r format(round(cor.test(sobs_data[,"human"], error_summary[error_summary$method=="precluster", "error"])$estimate, 2), nsmall=2)`). These results underscore the effect of sequencing error on the inflation of the number of observed OTUs.
 
 
 ```{r, classificationSummary}
@@ -317,11 +316,11 @@ max_one_off <- sapply(regions, get_max_one_off)
 ```
 
 ***Sequencing errors are not random.***
-Above, we described that although there was no obvious bias in the substitution or insertion rate, we did observe that guanines and adenines were more likely to be deleted than cytosines or thymidines. This lack of randomness in the error profile suggested that there might be a systematic non-random distribution of the errors across the sequences. This would manifest itself by the creation of duplicate sequences with the same error. We identified all of the mock community sequences that had a 1-nt difference to the true sequence. For these three regions, between `r paste0(format(round(range(percent_one_off[1,]), digits=1), nsmall=1), collapse=" and ")` of the sequences with 1-nt errors were only observed once. We found that the frequency of the most abundant 1-nt error paralleled the number of sequences. Surprisingly, the same 1-nt error appeared `r max_one_off["V1V6"]` times (`r format(round(percent_one_off[max_one_off["V1V6"], "V1V6"], digits=2), nsmall=2)`%) in the V1-V6 mock data and another 1-nt error appeared `r max_one_off["V1V9"]` times (`r format(round(percent_one_off[max_one_off["V1V9"], "V1V9"], digits=2), nsmall=2)`%) in the V1-V9 mock data. Contrary to previous reports {Carneiro, 2012 #3458;Koren, 2012 #3459}, these results indicate that reproducible errors occur with the PacBio sequencing platform and that they can be quite abundant. Through the use of the pre-clustering step described above these 1-nt errors would be ameliorated; however, this result indicates that caution should be used when attempting to use fine-scale OTU definitions.
+Above, we described that although there was no obvious bias in the substitution or insertion rate, we did observe that guanines and adenines were more likely to be deleted than cytosines or thymidines. This lack of randomness in the error profile suggested that there might be a systematic non-random distribution of the errors across the sequences. This would manifest itself by the creation of duplicate sequences with the same error. We identified all of the mock community sequences that had a 1-nt difference to the true sequence. For these three regions, between `r paste0(format(round(range(percent_one_off[1,]), digits=1), nsmall=1), collapse=" and ")` of the sequences with 1-nt errors were only observed once. We found that the frequency of the most abundant 1-nt error paralleled the number of sequences. Surprisingly, the same 1-nt error appeared `r max_one_off["V1V6"]` times (`r format(round(percent_one_off[max_one_off["V1V6"], "V1V6"], digits=2), nsmall=2)`%) in the V1-V6 mock data and another 1-nt error appeared `r max_one_off["V1V9"]` times (`r format(round(percent_one_off[max_one_off["V1V9"], "V1V9"], digits=2), nsmall=2)`%) in the V1-V9 mock data. Contrary to previous reports [@Carneiro2012; @Koren2012], these results indicate that reproducible errors occur with the PacBio sequencing platform and that they can be quite abundant. Through the use of the pre-clustering step described above these 1-nt errors would be ameliorated; however, this result indicates that caution should be used when attempting to use fine-scale OTU definitions.
 
 
 ## Conclusions
-The various sequencing platforms that are available to microbial ecologists are able to fill unique needs and have their own strengths and weaknesses. For sequencing the 16S rRNA gene, the 454 platform is able to generate a moderate number of high-quality 500-nt sequence fragments (error rates below 0.02%) {Schloss, 2011 #2466} and the MiSeq platform is able to generate a large number of high-quality 250-nt sequence fragments (error rates below 0.02%) {Kozich, 2013 #2719}. The promise of the PacBio sequencing platform was the generation of high-quality near full-length sequence fragments. As we have shown in this study, it is possible to generate near full-length sequences with error rates that are slightly higher, but comparable to the other platforms (i.e. `r round(error_summary[error_summary$region=="V1V9" & error_summary$method=="precluster","error"],2)`%). With the exception of the V4 region (`r round(error_summary[error_summary$region=="V4" & error_summary$method=="precluster","error"], 2)`%), the error rates were less than `r round(max(error_summary[error_summary$region!="V4" & error_summary$method=="precluster","error"]), 2)`%. When we considered the shorter V4 region, which is similar in length to what is sequenced by the MiSeq platform, the error rates we observed with the PacBio platform were nearly `r round(error_summary[error_summary$region=="V4" & error_summary$method=="precluster","error"]/0.02)`-fold higher than what has previously been reported on the other platforms. It was unclear why these shorter reads had such a high error rate relative to the other regions. At this point, the primary limitation of generating full-length sequences on the PacBio platform is the cost of generating the data and accessibility to the sequencers.
+The various sequencing platforms that are available to microbial ecologists are able to fill unique needs and have their own strengths and weaknesses. For sequencing the 16S rRNA gene, the 454 platform is able to generate a moderate number of high-quality 500-nt sequence fragments (error rates below 0.02%) [@Schloss2011a] and the MiSeq platform is able to generate a large number of high-quality 250-nt sequence fragments (error rates below 0.02%) [@Kozich2013]. The promise of the PacBio sequencing platform was the generation of high-quality near full-length sequence fragments. As we have shown in this study, it is possible to generate near full-length sequences with error rates that are slightly higher, but comparable to the other platforms (i.e. `r round(error_summary[error_summary$region=="V1V9" & error_summary$method=="precluster","error"],2)`%). With the exception of the V4 region (`r round(error_summary[error_summary$region=="V4" & error_summary$method=="precluster","error"], 2)`%), the error rates were less than `r round(max(error_summary[error_summary$region!="V4" & error_summary$method=="precluster","error"]), 2)`%. When we considered the shorter V4 region, which is similar in length to what is sequenced by the MiSeq platform, the error rates we observed with the PacBio platform were nearly `r round(error_summary[error_summary$region=="V4" & error_summary$method=="precluster","error"]/0.02)`-fold higher than what has previously been reported on the other platforms. It was unclear why these shorter reads had such a high error rate relative to the other regions. At this point, the primary limitation of generating full-length sequences on the PacBio platform is the cost of generating the data and accessibility to the sequencers.
 
 ```{r binomial_analysis}
 unique <- error_summary[error_summary$region=="V1V9" & error_summary$method=="coverage_pred","error"]/100
@@ -337,7 +336,6 @@ Full-length sequences are frequently seen as a panacea to overcome the limitatio
 The development of newer sequencing technologies continue to advance and there is justifiable excitement to apply these technologies to sequence the 16S rRNA gene. Although it is clearly possible to generate sequencing data from these various platforms, it is critical that we assess the platforms for their ability to generate high quality data and the particular niche that the new approach will fill. With this in mind, it is essential that researchers utilize mock communities as part of their experimental design so that they can quantify their error rates. The ability to generate near full-length 16S rRNA gene sequences is an exciting advance that will hopefully expand our ability to improve the characterization of microbial communities.
 
 
-
 ## Acknowledgements
 The Genomic DNA from Microbial Mock Community A (Even, Low Concentration, v3.1, HM-278D) was obtained through the NIH Biodefense and Emerging Infections Research Resources Repository, NIAID, NIH as part of the Human Microbiome Project.
 
@@ -345,6 +343,7 @@ The Genomic DNA from Microbial Mock Community A (Even, Low Concentration, v3.1, 
 ## Funding statement
 This study was supported by grants from the NIH (R01HG005975, R01GM099514 and P30DK034933 to PDS and U54HG004973 to SKH).
 
+\newpage
 
 ## Figures
 
@@ -372,5 +371,6 @@ reference provided species-level information.
 
 **Figure 4. Percentage of 1-nt variants that occured up to ten times.** Sequences that were 1 nt different from the mock community reference sequences were counted to determine the number of times each variant appeared by region within the 16S rRNA gene.
 
+\newpage
 
 ## References
