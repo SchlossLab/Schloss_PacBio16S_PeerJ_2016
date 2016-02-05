@@ -1,7 +1,8 @@
 pretty_region <- c("V4"="V4", "V3V5"="V3-V5", "V1V3"="V1-V3", "V1V5"="V1-V5", "V1V6"="V1-V6", "V1V9"="V1-V9")
 regions <- names(pretty_region)
 
-clrs <- rainbow(length(regions))
+library("wesanderson")
+clrs <- c(wes_palette("Darjeeling"), "black")
 names(clrs) <- regions
 
 
