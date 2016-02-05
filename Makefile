@@ -547,5 +547,4 @@ submission/Schloss_PacBio16S_PeerJ_2016.pdf : submission/Schloss_PacBio16S_PeerJ
 write.paper :	submission/table_1.pdf\
 				$(FIGS)/figure_1.pdf $(FIGS)/figure_2.pdf $(FIGS)/figure_3.pdf $(FIGS)/figure_4.pdf\
 				submission/Schloss_PacBio16S_PeerJ_2016.md\
-				submission/Schloss_PacBio16S_PeerJ_2016.pdf\
-				submission/figures_table_packet.pdf
+				submission/Schloss_PacBio16S_PeerJ_2016.pdf
