@@ -1,6 +1,6 @@
 REFS = data/references
 FIGS = submission
-TABLE = submission
+TABLE = results/tables
 PROC = data/process
 
 # utility function to print various variables. For example, running the
@@ -518,7 +518,7 @@ $(FIGS)/figure_4.pdf : code/build_figure4.R\
 				$(PROC)/non_random_analysis.tsv
 	R -e "source('code/build_figure4.R')"
 
-$(TABLE)/table_1.pdf : $(TABLE)/build_table1.Rmd\
+submission/table_1.pdf : $(TABLE)/build_table1.Rmd\
 				$(REFS)/pacbio.oligos\
 				$(PROC)/mock.error.report
 	R -e 'library(rmarkdown); render("results/tables/build_table1.Rmd", output_file="table_1.pdf")'
@@ -541,10 +541,10 @@ submission/Schloss_PacBio16S_PeerJ_2016.md : \
 	rm Schloss_PacBio16S_PeerJ_2016.utf8.md
 	mv Schloss_PacBio16S_PeerJ_2016.pdf submission/Schloss_PacBio16S_PeerJ_2016.pdf
 
-submission/Schloss_PacBio16S_PeerJ_2016.pdf : Schloss_PacBio16S_PeerJ_2016.md
+submission/Schloss_PacBio16S_PeerJ_2016.pdf : submission/Schloss_PacBio16S_PeerJ_2016.md
 
 
-write.paper :	$(TABLE)/table_1.pdf\
+write.paper :	submission/table_1.pdf\
 				$(FIGS)/figure_1.pdf $(FIGS)/figure_2.pdf $(FIGS)/figure_3.pdf $(FIGS)/figure_4.pdf\
 				submission/Schloss_PacBio16S_PeerJ_2016.md\
 				submission/Schloss_PacBio16S_PeerJ_2016.pdf\
