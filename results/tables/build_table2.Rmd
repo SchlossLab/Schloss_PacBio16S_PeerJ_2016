@@ -1,0 +1,74 @@
+---
+output:
+  pdf_document:
+    includes:
+      in_header: table_header.tex
+tables: true
+geometry: margin=1.0in
+---
+
+\captionsetup{labelformat=empty}
+
+```{r table1, results='asis', echo=FALSE, warning=FALSE, eval=TRUE}
+require(xtable, quietly=TRUE)
+options(xtable.sanitize.text.function=identity)
+options(xtable.sanitize.colnames.function=identity)
+
+pretty_region <- c("V4"="V4", "V1V3"="V1-V3", "V3V5"="V3-V5", "V1V5"="V1-V5", "V1V6"="V1-V6", "V1V9"="V1-V9")
+region_order <- names(pretty_region)
+
+mock_error <- read.table(file="data/process/error_summary.tsv", header=T, stringsAsFactors=F)
+regions <- mock_error[mock_error$method=="basic","region"]
+basic <- mock_error[mock_error$method=="basic","error"]
+predicted <- mock_error[mock_error$method=="pred","error"]
+precluster <- mock_error[mock_error$method=="precluster","error"]
+percent_remaining <- 100-mock_error[mock_error$method=="precluster","nseqs_red"]
+error_data <- data.frame(cbind(basic, predicted, precluster, percent_remaining))
+rownames(error_data) <- regions
+error_data <- error_data[region_order,]
+error_data <- format(error_data, nsmall=2L, digits=2)
+
+
+sobs_data <- read.table(file="data/process/sobs_table.tsv", header=T)
+sobs_data <- sobs_data[region_order,-c(1,7)]
+sobs_data <- format(sobs_data, nsmall=1L, digits=2)
+
+composite <- cbind(error_data, sobs_data)
+rownames(composite) <- pretty_region
+
+#Error rate (%) for:
+#% reads remaining from basic
+#Average no. of OTUsa
+
+header <- c("Basic", "Predicted", "Precluster", "", "Mock\\textsuperscript{b}", "Mock\\textsuperscript{c}", "Soil", "Mouse", "Human")
+
+header <- paste0("\\textbf{", header, "}")
+composite <- rbind(" " = header, composite)
+
+addtorow <- list(pos=list(0,1),
+                command=c('\\multirow{3}{*}{\\textbf{Region}} & \\multicolumn{3}{c}{\\textbf{Error rate following (\\%)}} & \\multirow{1}{*}{\\textbf{\\bigcell{c}{Reads \\\\ remaining (\\%)}}} & \\multicolumn{5}{c}{\\textbf{Average no. of OTUs\\textsuperscript{a}}} \\\\ \\cmidrule(r){2-4}	\\cmidrule(r){6-10}', '\\hline '))
+
+
+caption <- "\\textbf{Table 2. Summary of the error rates and number of observed OTUs for each region.}"
+
+composite <- xtable(composite, caption = caption, label="")
+
+align(composite) <- "cccccccccc"
+print(composite,
+    add.to.row=addtorow,
+	include.rownames=TRUE,
+	include.colnames=FALSE,
+	hline.after = c(-1, nrow(composite)),
+    comment=FALSE,
+    caption.placement = "top",
+    table.placement="!ht",
+	size="small",
+	NA.string="ND"
+)
+```
+
+^a^ The number of OTUs is based on rarefaction of each sample to 1,000 sequences per sample; cells labeled ND reflect samples that did not have at least 1,000 sequences.
+
+^b^ Number of OTUs in the mock community when all chimeras were removed; in the absence of chimeras and sequencing errors, there should be 19 OTUs for all three regions.
+
+^c^ Number of OTUs in the mock community when chimeras were removed using UCHIME.
