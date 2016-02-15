@@ -557,3 +557,6 @@ write.paper :	submission/table_1.pdf\
 				$(FIGS)/figure_4.pdf\
 				submission/Schloss_PacBio16S_PeerJ_2016.md\
 				submission/Schloss_PacBio16S_PeerJ_2016.pdf
+
+submission/rebuttal_v1.pdf : doc/paper/rebuttal_v1.md
+	pandoc --variable mainfont="Helvetica" --variable fontsize=12pt --variable geometry:margin=1in $^ --latex-engine=xelatex -o $@
