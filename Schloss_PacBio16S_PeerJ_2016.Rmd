@@ -3,6 +3,7 @@ title: "**Sequencing 16S rRNA gene fragments using the PacBio SMRT DNA sequencin
 bibliography: references.bib
 output:
   pdf_document:
+    keep_tex: true
     includes:
       in_header: header.tex
 csl: peerj.csl
@@ -166,9 +167,6 @@ The development of newer sequencing technologies continue to advance and there i
 ## Acknowledgements
 The Genomic DNA from Microbial Mock Community A (Even, Low Concentration, v3.1, HM-278D) was obtained through the NIH Biodefense and Emerging Infections Research Resources Repository, NIAID, NIH as part of the Human Microbiome Project.
 
-
-## Funding statement
-This study was supported by grants from the NIH (R01HG005975, R01GM099514 and P30DK034933 to PDS and U54HG004973 to SKH).
 
 \newpage
 

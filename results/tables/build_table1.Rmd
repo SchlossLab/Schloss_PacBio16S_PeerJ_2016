@@ -1,6 +1,7 @@
 ---
 output:
   pdf_document:
+    keep_tex: true
     includes:
       in_header: table_header.tex
 tables: true

@@ -3,6 +3,7 @@ title: "**Sequencing 16S rRNA gene fragments using the PacBio SMRT DNA sequencin
 bibliography: references.bib
 output:
   pdf_document:
+    keep_tex: true
     includes:
       in_header: header.tex
 csl: peerj.csl
@@ -71,7 +72,7 @@ All sequencing data were curated using mothur (v1.36)[@Schloss2009a] and analyze
 ## Results and Discussion
 
 ***The PacBio error profile and a basic sequence curation procedure.***
-To build a sequence curation pipeline, we first needed to characterize the error rate associated with sequencing the 16S rRNA gene. Using the consensus sequence obtained from at least 3 sequencing passes of each fragment, we observed an average sequencing error rate of 0.65%. Insertions, deletions, and substitutions accounted for 31.1, 17.9, and 51.0% of the errors, respectively. The substitution errors were equally likely and all four bases were equally likely to cause insertion errors. Interestingly, guanines (39.4%) and adenines (24.2%) were more likely to be deleted than cytosines (18.3%) or thymidines (18.0%). The PacBio quality values varied between 2 and 93. Surprisingly, the percentage of base calls that had the maximum quality value did not vary among correct base calls (80.5%), substitutions (79.9%), and insertions (80.3%). It was not possible to use the individual base quality scores could not be used to screen sequence quality as has been possible in past studies using the Phred-based quality scores that accompany data generated using the 454 and Illumina technologies. We did observe a strong correlation between our observed error rate and the predicted error rate as calculated by the PacBio software (Pearson's R: -0.67; Figure 1A).
+To build a sequence curation pipeline, we first needed to characterize the error rate associated with sequencing the 16S rRNA gene. Using the consensus sequence obtained from at least 3 sequencing passes of each fragment, we observed an average sequencing error rate of 0.65%. Insertions, deletions, and substitutions accounted for 31.2, 17.9, and 50.9% of the errors, respectively. The substitution errors were equally likely and all four bases were equally likely to cause insertion errors. Interestingly, guanines (39.4%) and adenines (24.3%) were more likely to be deleted than cytosines (18.3%) or thymidines (18.0%). The PacBio quality values varied between 2 and 93. Surprisingly, the percentage of base calls that had the maximum quality value did not vary among correct base calls (80.5%), substitutions (80.0%), and insertions (80.4%). It was not possible to use the individual base quality scores could not be used to screen sequence quality as has been possible in past studies using the Phred-based quality scores that accompany data generated using the 454 and Illumina technologies. We did observe a strong correlation between our observed error rate and the predicted error rate as calculated by the PacBio software (Pearson's R: -0.67; Figure 1A).
 
 
 
@@ -117,9 +118,6 @@ The development of newer sequencing technologies continue to advance and there i
 ## Acknowledgements
 The Genomic DNA from Microbial Mock Community A (Even, Low Concentration, v3.1, HM-278D) was obtained through the NIH Biodefense and Emerging Infections Research Resources Repository, NIAID, NIH as part of the Human Microbiome Project.
 
-
-## Funding statement
-This study was supported by grants from the NIH (R01HG005975, R01GM099514 and P30DK034933 to PDS and U54HG004973 to SKH).
 
 \newpage
 
