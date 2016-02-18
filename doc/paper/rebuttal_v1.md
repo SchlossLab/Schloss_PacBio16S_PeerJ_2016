@@ -1,3 +1,6 @@
+Because the manuscript has been nearly entirely rewritten, we did not think it was appropriate to submit a version of the new manuscript that indicated the changes - the entire manuscript was changed. We appreciate the insights and suggestions from the original reviewers and apologize for taking so long to resubmit the manuscript. We took their advice to heart and regenerated the data using the P6C4 PacBio chemistry.
+
+
 
 ## Reviewer 1
 
@@ -28,7 +31,7 @@ Unfortunately, we were not able to identify any signatures beyond the various in
 
 **Figure 2 is bit difficult to follow with this “numbering” scheme, suggest to change to colored lines.**
 
-Part of the design of this figure was that the regions generally overlap on top of each other indicating that the effectiveness of the methods is reproducible. We have colored the numbers and increased the horizontal jitter.
+Part of the design of this figure was that the regions generally overlap on top of each other indicating that the effectiveness of the methods is reproducible. We have replaced the numbers with colored symbols and increased the horizontal jitter.
 
 
 
