@@ -522,14 +522,15 @@ submission/table_1.% : $(TABLE)/build_table1.Rmd\
 				$(REFS)/pacbio.oligos\
 				$(PROC)/mock.error.report
 	R -e 'library(rmarkdown); render("results/tables/build_table1.Rmd", output_file="table_1.pdf")'
-	mv results/tables/table_1.pdf $@
+	mv results/tables/table_1.pdf submission/
+	mv results/tables/table_1.tex submission/
 
 submission/table_2.% : $(TABLE)/build_table2.Rmd\
 				$(PROC)/sobs_table.tsv\
 				$(PROC)/mock.error.report
 	R -e 'library(rmarkdown); render("results/tables/build_table2.Rmd", output_file="table_2.pdf")'
-	mv results/tables/table_2.pdf $@
-
+	mv results/tables/table_2.pdf submission/
+	mv results/tables/table_2.tex submission/
 
 submission/Schloss_PacBio16S_PeerJ_2016.% : \
 						$(PROC)/error_profile.json\
